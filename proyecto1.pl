@@ -1,13 +1,13 @@
 %****************************************************************
-%*PROYECTO    : REPRESENTACIÓN DEL CONOCIMIENTO                 *
+%*PROYECTO    : REPRESENTACIÃ“N DEL CONOCIMIENTO                 *
 %*INTEGRANTES : Cheung Derek                                    *
-%*              González Rico Diana Virginia                    *
-%*              Neri González José Francisco                    *
+%*              GonzÃ¡lez Rico Diana Virginia                    *
+%*              Neri GonzÃ¡lez JosÃ© Francisco                    *
 %*FECHA       : 11/Octubre/2016                                 *
-%*DESCRIPCIÓN : Generar una Base de conocimeinto(KB) a partir   *
-%*de la jerarquía conceptual con defaults y excepciones         * 
-%*explicada en clase y de la especificación de la base de       *
-%*conocimiento presentada en el artículo "A Light Non-Monotonic *
+%*DESCRIPCIÃ“N : Generar una Base de conocimeinto(KB) a partir   *
+%*de la jerarquÃ­a conceptual con defaults y excepciones         * 
+%*explicada en clase y de la especificaciÃ³n de la base de       *
+%*conocimiento presentada en el artÃ­culo "A Light Non-Monotonic *
 %*Knowledge-Base for Service Robots"                            *
 %****************************************************************
 
@@ -58,7 +58,5 @@ atom_to_term(ATOM, TERM) :-
 %****************************************************************
 agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(NomClase,Madre,[],[],[])],KB_Nuevo).
 
-%agrega_propiedad_clase(NomClase,Propiedad,Valor,KB_Original,KB_Nuevo) :-
-%	cambiaElemento(clase(NomClase,Madre,Props,Rels,Objetos),clase(NomClase,Madre,NProps,Rels,Objetos),KB_Original,KB_Nuevo),
-%	agregar_propiedad(Props,Propiedad,Valor,NProps).
+%agrega_propiedad_clase(NomClase,Propiedad,Valor,KB_Original,KB_Nuevo)
 
