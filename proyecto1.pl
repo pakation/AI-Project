@@ -51,12 +51,22 @@ atom_to_term(ATOM, TERM) :-
 
 :- op(800,xfx,'=>').
 
-
-
 %****************************************************************
 % Agrega una nueva clase vacia.
 %****************************************************************
 agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(NomClase,Madre,[],[],[])],KB_Nuevo).
 
-%agrega_propiedad_clase(NomClase,Propiedad,Valor,KB_Original,KB_Nuevo)
+%****************************************************************
+% Agrega una nueva propiedad a una clase
+%****************************************************************
 
+% Usage: open_kb("KB_Original.txt", KB_Original), agrega_propiedad_clase(animal, alfa, beta, KB_Original, KB_Nuevo).
+
+% modificar elemento concordante, este forma la basis del abajo
+% foo([alfa|T], [beta|T]).
+% foo([H|T], [H|R]) :- foo(T,R).
+
+agrega_propiedad_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	append(Props, [Propiedad=>Valor], Props_New).
+agrega_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	agrega_propiedad_clase(NomClase, Propiedad, Valor, T, R).
