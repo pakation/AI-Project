@@ -1,1 +1,1 @@
-[clase(top,none,[],[],[]),clase(animal,top,[ejemplo => true],[],[])]
+[clase(top,none,[],[],[]),clase(animal,top,[alfa => a],[beta => b],[gamma => g])]

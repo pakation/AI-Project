@@ -66,7 +66,45 @@ agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(N
 % foo([alfa|T], [beta|T]).
 % foo([H|T], [H|R]) :- foo(T,R).
 
-agrega_propiedad_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
-	append(Props, [Propiedad=>Valor], Props_New).
-agrega_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	agrega_propiedad_clase(NomClase, Propiedad, Valor, T, R).
+% Propiedad debe estar en la forma de atom, propiedad => valor, o not(propiedad => valor)
+
+agrega_propiedad_clase(NomClase,Propiedad,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	append(Props, [Propiedad], Props_New).
+agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
+	agrega_propiedad_clase(NomClase, Propiedad, T, R).
+
+%****************************************************************
+% Agrega una nueva relacion a una clase
+%****************************************************************
+
+% Relacion debe estar en la forma de atom, propiedad => valor, o not(propiedad => valor)
+
+agrega_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	append(Rels, [Relacion], Rels_New).
+agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
+	agrega_relacion_clase(NomClase, Relacion, T, R).
+
+%****************************************************************
+% Eliminar un elemento de una lista
+%****************************************************************
+
+elimina_elemento(Elemento, [Elemento|T], T).
+elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
+
+%****************************************************************
+% Eliminar una propiedad de una clase
+%****************************************************************
+
+elimina_propiedad_clase(NomClase,Propiedad,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	elimina_elemento(Propiedad, Props, Props_New).
+elimina_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
+	elimina_propiedad_clase(NomClase, Propiedad, T, R).
+
+%****************************************************************
+% Eliminar una relacion de una clase
+%****************************************************************
+
+elimina_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	elimina_elemento(Relacion, Rels, Rels_New).
+elimina_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
+	elimina_relacion_clase(NomClase, Relacion, T, R).
