@@ -108,3 +108,11 @@ elimina_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)
 	elimina_elemento(Relacion, Rels, Rels_New).
 elimina_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
 	elimina_relacion_clase(NomClase, Relacion, T, R).
+
+%****************************************************************
+% Modificar nombre de una clase
+%****************************************************************
+
+modificar_nombre_clase(NomClase,NomClase_New,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase_New,Madre,Props,Rels,Insts)|T]).
+modificar_nombre_clase(NomClase,NomClase_New,[H|T],[H|R]) :- 
+	modificar_nombre_clase(NomClase, NomClase_New, T, R).
