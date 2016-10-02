@@ -52,12 +52,16 @@ atom_to_term(ATOM, TERM) :-
 :- op(800,xfx,'=>').
 
 %****************************************************************
-% Agrega una nueva clase vacia.
+% 1a.
+%****************************************************************
+
+%****************************************************************
+% 2a. Agrega una nueva clase vacia.
 %****************************************************************
 agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(NomClase,Madre,[],[],[])],KB_Nuevo).
 
 %****************************************************************
-% Agrega una nueva propiedad a una clase
+% 2b. Agrega una nueva propiedad a una clase
 %****************************************************************
 
 % Usage: open_kb("KB_Original.txt", KB_Original), agrega_propiedad_clase(animal, alfa, beta, KB_Original, KB_Nuevo).
@@ -74,7 +78,7 @@ agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 	agrega_propiedad_clase(NomClase, Propiedad, T, R).
 
 %****************************************************************
-% Agrega una nueva relacion a una clase
+% 2c. Agrega una nueva relacion a una clase
 %****************************************************************
 
 % Relacion debe estar en la forma de atom, propiedad => valor, o not(propiedad => valor)
@@ -92,7 +96,14 @@ elimina_elemento(Elemento, [Elemento|T], T).
 elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
 
 %****************************************************************
-% Eliminar una propiedad de una clase
+% 3a. Eliminar un clase u objecto
+%****************************************************************
+
+elimina_clase(NomClase, [clase(NomClase,_,_,_,_)|T], T).
+elimina_clase(NomClase, [H|T], [H|R]) :- elimina_clase(NomClase, T,R).
+
+%****************************************************************
+% 3b. Eliminar una propiedad de una clase
 %****************************************************************
 
 elimina_propiedad_clase(NomClase,Propiedad,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
@@ -101,7 +112,7 @@ elimina_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 	elimina_propiedad_clase(NomClase, Propiedad, T, R).
 
 %****************************************************************
-% Eliminar una relacion de una clase
+% 3c. Eliminar una relacion de una clase
 %****************************************************************
 
 elimina_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
@@ -110,9 +121,34 @@ elimina_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :-
 	elimina_relacion_clase(NomClase, Relacion, T, R).
 
 %****************************************************************
-% Modificar nombre de una clase
+% 4a. Modificar nombre de una clase
 %****************************************************************
 
 modificar_nombre_clase(NomClase,NomClase_New,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase_New,Madre,Props,Rels,Insts)|T]).
 modificar_nombre_clase(NomClase,NomClase_New,[H|T],[H|R]) :- 
 	modificar_nombre_clase(NomClase, NomClase_New, T, R).
+
+%****************************************************************
+% Actualizar valor de un elemento en una lista
+%****************************************************************
+
+actualiza_valor(Prop, Valor, [Prop => _|T], [Prop => Valor|T]).
+actualiza_valor(Prop, Valor, [H|T], [H|R]) :- actualiza_valor(Prop, Valor, T,R).
+
+%****************************************************************
+% 4b. Modificar valor de una propiedad
+%****************************************************************
+
+modifica_propiedad_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	actualiza_valor(Propiedad, Valor, Props, Props_New).
+modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	modifica_propiedad_clase(NomClase, Propiedad, Valor, T, R).
+
+%****************************************************************
+% 4c. Modificar con quién mantiene una relación
+%****************************************************************
+
+modifica_relacion_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
+modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
