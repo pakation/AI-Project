@@ -4,7 +4,7 @@
 %*              González Rico Diana Virginia                    *
 %*              Neri González José Francisco                    *
 %*FECHA       : 11/Octubre/2016                                 *
-%*DESCRIPCIÓN : Generar una Base de conocimeinto(KB) a partir   *
+%*DESCRIPCIÓN : Generar una Base de conocimiento(KB) a partir   *
 %*de la jerarquía conceptual con defaults y excepciones         * 
 %*explicada en clase y de la especificación de la base de       *
 %*conocimiento presentada en el artículo "A Light Non-Monotonic *
@@ -70,7 +70,7 @@ agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(N
 % foo([alfa|T], [beta|T]).
 % foo([H|T], [H|R]) :- foo(T,R).
 
-% Propiedad debe estar en la forma de atom, propiedad => valor, o not(propiedad => valor)
+% Propiedad debe estar en formato de atomo, atributo => valor, o not(atributo => valor)
 
 agrega_propiedad_clase(NomClase,Propiedad,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
 	append(Props, [Propiedad], Props_New).
@@ -81,7 +81,7 @@ agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 % 2c. Agrega una nueva relacion a una clase
 %****************************************************************
 
-% Relacion debe estar en la forma de atom, propiedad => valor, o not(propiedad => valor)
+% Relacion debe estar en formato de atom, atributo => valor, o not(atributo => valor)
 
 agrega_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
 	append(Rels, [Relacion], Rels_New).
@@ -96,7 +96,7 @@ elimina_elemento(Elemento, [Elemento|T], T).
 elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
 
 %****************************************************************
-% 3a. Eliminar un clase u objecto
+% 3a. Eliminar un clase u objeto
 %****************************************************************
 
 elimina_clase(NomClase, [clase(NomClase,_,_,_,_)|T], T).
