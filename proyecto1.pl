@@ -149,6 +149,16 @@ elimina_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 	elimina_propiedad_clase(NomClase, Propiedad, T, R).
 
 %****************************************************************
+% 3b. Eliminar una propiedad de un objeto
+%****************************************************************
+
+elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
+	elimina_elemento(Propiedad,PropsObjeto,PropsObjeto_New).
+
+%****************************************************************
 % 3c. Eliminar una relacion de una clase
 %****************************************************************
 
@@ -156,6 +166,16 @@ elimina_relacion_clase(NomClase,Relacion,[clase(NomClase,Madre,Props,Rels,Insts)
 	elimina_elemento(Relacion, Rels, Rels_New).
 elimina_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
 	elimina_relacion_clase(NomClase, Relacion, T, R).
+
+%****************************************************************
+% 3b. Eliminar una relación de un objeto
+%****************************************************************
+
+elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
+	elimina_elemento(Relacion,RelsObjeto,RelsObjeto_New).
 
 %****************************************************************
 % 4a. Modificar nombre de una clase
