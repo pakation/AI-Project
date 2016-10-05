@@ -86,6 +86,16 @@ agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 	agrega_propiedad_clase(NomClase, Propiedad, T, R).
 
 %****************************************************************
+% 2b. Agrega una nueva propiedad a un objeto 
+%****************************************************************
+
+agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
+	append(PropsObjeto,[Propiedad],PropsObjeto_New).
+
+%****************************************************************
 % 2c. Agrega una nueva relacion a una clase
 %****************************************************************
 
@@ -97,6 +107,16 @@ agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :-
 	agrega_relacion_clase(NomClase, Relacion, T, R).
 
 %****************************************************************
+% 2c. Agrega una nueva relacion a un objeto
+%****************************************************************
+
+agrega_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
+	append(RelsObjeto,[Relacion],RelsObjeto_New).
+
+%****************************************************************
 % Eliminar un elemento de una lista
 %****************************************************************
 
@@ -104,11 +124,20 @@ elimina_elemento(Elemento, [Elemento|T], T).
 elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
 
 %****************************************************************
-% 3a. Eliminar un clase u objeto
+% 3a. Eliminar una clase
 %****************************************************************
 
 elimina_clase(NomClase, [clase(NomClase,_,_,_,_)|T], T).
 elimina_clase(NomClase, [H|T], [H|R]) :- elimina_clase(NomClase, T,R).
+
+%****************************************************************
+% 3a. Eliminar un objeto
+%****************************************************************
+
+elimina_objeto(NomObjeto,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,_,_],Insts),
+	elimina_elemento([id=>NomObjeto,_,_],Insts,Insts_New).
 
 %****************************************************************
 % 3b. Eliminar una propiedad de una clase
@@ -160,3 +189,21 @@ modifica_relacion_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rel
 	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
 modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
 	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
+	
+%****************************************************************
+% Verifica que un elemento sea parte de una lista
+%****************************************************************
+
+verifica_elemento(Elemento,[Elemento|_]).
+verifica_elemento(Elemento,[_|T]):-
+	verifica_elemento(Elemento,T).
+
+%****************************************************************
+% Cambia un elemento A por otro elemento B en una lista
+%****************************************************************
+
+reemplaza_elemento(_,_,[],[]).
+reemplaza_elemento(Elemento_A,Elemento_B,[Elemento_A|T],[Elemento_B|R]):-
+	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
+reemplaza_elemento(Elemento_A,Elemento_B,[H|T],[H|R]):-
+	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
