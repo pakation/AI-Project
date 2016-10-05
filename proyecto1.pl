@@ -61,6 +61,14 @@ atom_to_term(ATOM, TERM) :-
 agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[clase(NomClase,Madre,[],[],[])],KB_Nuevo).
 
 %****************************************************************
+% 2a. Agrega un nuevo objeto a una clase
+%****************************************************************
+agrega_objeto_clase(NomClase,NomObjeto,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels,Insts_New)|T]) :- 
+	append(Insts, [[id=>NomObjeto,[],[]]], Insts_New).
+agrega_objeto_clase(NomClase,NomObjeto,[H|T],[H|R]) :- 
+	agrega_objeto_clase(NomClase, NomObjeto, T, R).
+
+%****************************************************************
 % 2b. Agrega una nueva propiedad a una clase
 %****************************************************************
 
