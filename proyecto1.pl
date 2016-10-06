@@ -181,10 +181,19 @@ elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
 % 4a. Modificar nombre de una clase
 %****************************************************************
 
-modificar_nombre_clase(NomClase,NomClase_New,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase_New,Madre,Props,Rels,Insts)|T]).
-modificar_nombre_clase(NomClase,NomClase_New,[H|T],[H|R]) :- 
-	modificar_nombre_clase(NomClase, NomClase_New, T, R).
+modifica_nombre_clase(NomClase,NomClase_New,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase_New,Madre,Props,Rels,Insts)|T]).
+modifica_nombre_clase(NomClase,NomClase_New,[H|T],[H|R]) :- 
+	modifica_nombre_clase(NomClase, NomClase_New, T, R).
 
+%****************************************************************
+% 4a. Modificar nombre de un objeto
+%****************************************************************
+
+modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(clase(NomClase,Madre,Props,Rels,Insts),clase(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto|T],Insts),
+	reemplaza_elemento([id=>NomObjeto|T],[id=>NomObjeto_New|T],Insts,Insts_New).
+	
 %****************************************************************
 % Actualizar valor de un elemento en una lista
 %****************************************************************
@@ -193,7 +202,7 @@ actualiza_valor(Prop, Valor, [Prop => _|T], [Prop => Valor|T]).
 actualiza_valor(Prop, Valor, [H|T], [H|R]) :- actualiza_valor(Prop, Valor, T,R).
 
 %****************************************************************
-% 4b. Modificar valor de una propiedad
+% 4b. Modificar valor de una propiedad de una clase
 %****************************************************************
 
 modifica_propiedad_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
@@ -202,13 +211,29 @@ modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :-
 	modifica_propiedad_clase(NomClase, Propiedad, Valor, T, R).
 
 %****************************************************************
-% 4c. Modificar con quién mantiene una relación
+% 4b. Modificar valor de una propiedad de un objeto
+%****************************************************************
+
+modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo) :-
+	elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Aux),
+	agrega_propiedad_objeto(NomObjeto,Propiedad_New,KB_Aux,KB_Nuevo).
+
+%****************************************************************
+% 4c. Modificar con quién mantiene una relación una clase
 %****************************************************************
 
 modifica_relacion_clase(NomClase,Propiedad,Valor,[clase(NomClase,Madre,Props,Rels,Insts)|T],[clase(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
 	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
 modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
 	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
+	
+%****************************************************************
+% 4c. Modificar con quién mantiene una relación un objeto
+%****************************************************************
+
+modifica_relacion_objeto(NomObjeto,Relacion,Relacion_New,KB_Original,KB_Nuevo) :-
+	elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Aux),
+	agrega_relacion_objeto(NomObjeto,Relacion_New,KB_Aux,KB_Nuevo).
 	
 %****************************************************************
 % Verifica que un elemento sea parte de una lista
