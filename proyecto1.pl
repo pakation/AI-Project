@@ -351,6 +351,39 @@ package(Value, [[id => Name,_,_]| T], Insts, Insts_New) :-
 	package(Value, T, Insts_Tmp, Insts_New).
 package(_, [], Insts, Insts).
 
+ep_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
+	get_value(Attr => ValueNew, Props), % check prop match match to generate new value, if exists
+	package(ValueNew, Insts_A, [], Results_A), % apply prop to instances
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)), % continue scanning with old value
+	append(Results_A, Results_B, Results_C),
+	ignore(ep_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with new value
+	append(Results_C, Results_D, Results)
+	;
+	package(Value, Insts_A, [], Results_A),
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)), % continue scanning with same value
+	append(Results_A, Results_B, Results_C),
+	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with same value
+	append(Results_C, Results_D, Results).
+ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
+ep_madre(_, _, _, [], _, []).
+
+% search for the top-most class that defines the given property
+ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
+	get_value(Attr => Value, Props), % find property
+	package(Value, Insts_A, [], Results_A), % found, apply 
+	ignore(ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)), % continue breadth scan
+	append(Results_A, Results_B, Results_C), % add those results
+	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
+	append(Results_C, Results_D, Results) % append results
+	; ignore(ep_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)), % if property doesnt exist continue breadth scan
+	ep_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original), % continue depth scan
+	append(Results_A, Results_B, Results). % add those results
+ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
+ep_find_root(_, _, [], _, []).
+
+extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
+	
+
 % Dado el nombre de un attributo, buscar por todos los clases (!) que tienen
 % una propiedad con el mismo attributo. Luego asignar ese valor a todos 
 % los instancias (!) de ese clase
@@ -362,15 +395,16 @@ package(_, [], Insts, Insts).
 % propagate_propiedad(NomClaseMadre, Attr, Valor, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
 %	...
 %
-ec_propiedad(Attr, Results, KB_Original, [class(_,_,Props,_,Insts_A)|T]) :-
-	get_value(Attr => Value, Props),
-	package(Value, Insts_A, [], Results_A),
-	ec_propiedad(Attr, Results_B, KB_Original, T),
-	append(Results_A, Results_B, Results)
-	; ec_propiedad(Attr, Results, KB_Original, T).
-	% TODO
-ec_propiedad(_, [], _, []).
-	
-ec_propiedad(_, Insts, KB_Original, [_|T]) :- ec(_, Insts, KB_Original, T).
-% TODO
-ec_propiedad(_, [], _, []).
+% ec_propiedad(Attr, Results, KB_Original, [class(NomClase,_,Props,_,Insts_A)|T]) :-
+% 	get_value(Attr => Value, Props),
+% 	package(Value, Insts_A, [], Results_A),
+% 	ignore(ec_propiedad(Attr, Results_B, KB_Original, T)),
+% 	append(Results_A, Results_B, Results_C),
+% 	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)),
+% 	append(Results_C, Results_D, Results)
+% 	; ec_propiedad(Attr, Results, KB_Original, T).
+% ec_propiedad(_, [], _, []).
+% 	
+% ec_propiedad(_, Insts, KB_Original, [_|T]) :- ec(_, Insts, KB_Original, T).
+% % TODO
+% ec_propiedad(_, [], _, []).
