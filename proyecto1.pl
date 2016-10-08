@@ -252,3 +252,32 @@ reemplaza_elemento(Elemento_A,Elemento_B,[Elemento_A|T],[Elemento_B|R]):-
 	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
 reemplaza_elemento(Elemento_A,Elemento_B,[H|T],[H|R]):-
 	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
+%--------------------------------------------------------------------------------------------------
+%--------------------------------------------------------------------------------------------------
+%--------------------------------------------------------------------------------------------------
+
+%****************************************************************
+% Verifica que una clase exista en la base de conocimiento
+%****************************************************************
+
+%usage open_kb('ruta',KB),verifica_clase(clase,Resp,KB).
+
+verifica_clase(_,'No sé',[]).
+verifica_clase(NomClase,'No',[clase(not(NomClase),_,_,_,_)|_]).
+verifica_clase(NomClase,'Sí',[clase(NomClase,_,_,_,_)|_]).
+verifica_clase(NomClase,Resp,[_|T]):-
+	verifica_clase(NomClase,Resp,T).
+
+extension_clase_madre(NomClaseMadre, Exts, Exts_New, KB_Original, [clase(NomClase,NomClaseMadre, _, _, Insts)|T]) :- 
+	write(NomClase),
+	extension_clase(NomClase, Exts_A, Exts_B, KB_Original, KB_Original),
+	extension_clase_madre(NomClaseMadre, Exts_B, Exts_New, KB_Original, T).
+
+extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, T) ; append(Exts, [], Exts_New). 
+
+extension_clase(NomClase, Exts, Exts_New, KB_Original, [clase(NomClase,_, _, _, Insts)|T]) :- 
+	write(NomClase),
+	append(Exts, Insts, Exts_A),
+	extension_clase_madre(NomClase, Exts_A, Exts_New, KB_Original, KB_Original).
+
+extension_clase(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase(NomClase, Exts, Exts_New, KB_Original, T).
