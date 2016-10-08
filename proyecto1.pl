@@ -417,4 +417,52 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
+% TODO para objectos afuera del parte "afectado" por la propiedad, buscar para individuos que sí lo tienen
+
 extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
+
+%****************************************************************
+% 1c. Extensiones de una relación
+%
+% Usage: extension_relación(Typ, Extensiones, KnowledgeBase)
+%****************************************************************
+
+% assert empty
+not_empty([H|T]).
+
+% TODO buscar objectos que tienen relaciónes
+
+get_all_values(Attr, [Attr => Value|T], Lista, Lista_Nueva) :-
+	append(Lista, [Value], Lista_Tmp),
+	get_all_values(Attr, T, Lista_Tmp, Lista_Nueva).
+get_all_values(Attr, [_|T], Lista, Lista_Nueva) :- get_all_values(Attr, T, Lista, Lista_Nueva).
+get_all_values(_, [], Lista, Lista).
+
+ec_combi([NomClase|T], Ids, Ids_Nuevo, KB_Original) :-
+	extension_class(NomClase, Ids_A, KB_Original),
+	not_empty(Ids_A), % ensegurar que clase por este nombre existe
+	append(Ids, Ids_A, Ids_B),
+	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original)
+	; append(Ids, [NomClase], Ids_B), % si no existe, es id
+	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original).
+ec_combi([], Ids, Ids, _).
+
+pack_2d([Name|T], Ids, Results, Results_Nuevo) :- 
+	append(Results, [Name:Ids], Results_A),
+	pack_2d(T, Ids, Results_A, Results_Nuevo).
+pack_2d([], _, Results, Results).
+
+% Buscar una clase que tiene esa relación
+er_find_rel(Attr, Results, KB_Original, [class(NomClase,_,_,Rels,Insts_A)|T]) :- 
+	get_all_values(Attr, Rels, [], Subjs_A), % get all relations
+	not_empty(Subjs_A),
+	ec_combi(Subjs_A, [], Ids_A, KB_Original), % get extensions of those clases
+	extension_class(NomClase, Ids_B, KB_Original), % get my extensions
+	pack_2d(Ids_B, Ids_A, [], Results_A), % pack
+	er_find_rel(Attr, Results_B, KB_Original, T),
+	append(Results_A, Results_B, Results).
+	; 
+	%ignore(ec_madre(NomClase, Iters_A, KB_Original, KB_Original)),
+	er_find_rel(Attr, Results, KB_Original, T).
+er_find_rel(Attr, Results, KB_Original, [_|T]) :- er_find_rel(Attr, Results, KB_Original, T).
+er_find_rel(_, [], _, []).
