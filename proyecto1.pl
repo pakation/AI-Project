@@ -428,41 +428,93 @@ extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Resul
 %****************************************************************
 
 % assert empty
-not_empty([H|T]).
+% not_empty([H|T]).
+% 
+% % TODO buscar objectos que tienen relaciónes
+% 
+% get_all_values(Attr, [Attr => Value|T], Lista, Lista_Nueva) :-
+% 	append(Lista, [Value], Lista_Tmp),
+% 	get_all_values(Attr, T, Lista_Tmp, Lista_Nueva).
+% get_all_values(Attr, [_|T], Lista, Lista_Nueva) :- get_all_values(Attr, T, Lista, Lista_Nueva).
+% get_all_values(_, [], Lista, Lista).
+% 
+% ec_combi([NomClase|T], Ids, Ids_Nuevo, KB_Original) :-
+% 	extension_class(NomClase, Ids_A, KB_Original),
+% 	not_empty(Ids_A), % ensegurar que clase por este nombre existe
+% 	append(Ids, Ids_A, Ids_B),
+% 	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original)
+% 	; append(Ids, [NomClase], Ids_B), % si no existe, es id
+% 	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original).
+% ec_combi([], Ids, Ids, _).
+% 
+% pack_2d([Name|T], Ids, Results, Results_Nuevo) :- 
+% 	append(Results, [Name:Ids], Results_A),
+% 	pack_2d(T, Ids, Results_A, Results_Nuevo).
+% pack_2d([], _, Results, Results).
+% 
+% % Buscar una clase que tiene esa relación
+% er_find_rel(Attr, Results, KB_Original, [class(NomClase,_,_,Rels,Insts_A)|T]) :- 
+% 	get_all_values(Attr, Rels, [], Subjs_A), % get all relations
+% 	not_empty(Subjs_A),
+% 	ec_combi(Subjs_A, [], Ids_A, KB_Original), % get extensions of those clases
+% 	extension_class(NomClase, Ids_B, KB_Original), % get my extensions
+% 	pack_2d(Ids_B, Ids_A, [], Results_A), % pack
+% 	er_find_rel(Attr, Results_B, KB_Original, T),
+% 	append(Results_A, Results_B, Results).
+% 	; 
+% 	%ignore(ec_madre(NomClase, Iters_A, KB_Original, KB_Original)),
+% 	er_find_rel(Attr, Results, KB_Original, T).
+% er_find_rel(Attr, Results, KB_Original, [_|T]) :- er_find_rel(Attr, Results, KB_Original, T).
+% er_find_rel(_, [], _, []).
 
-% TODO buscar objectos que tienen relaciónes
+package_relation([[id=>Name,_,_]|T], Subjs, Results, Results_New) :-
+	append(Results, [Name:Subjs], Results_A),
+	package_relation(T, Subjs, Results_A, Results_New).
+package_relation([], _, Results, Results).
 
-get_all_values(Attr, [Attr => Value|T], Lista, Lista_Nueva) :-
-	append(Lista, [Value], Lista_Tmp),
-	get_all_values(Attr, T, Lista_Tmp, Lista_Nueva).
-get_all_values(Attr, [_|T], Lista, Lista_Nueva) :- get_all_values(Attr, T, Lista, Lista_Nueva).
-get_all_values(_, [], Lista, Lista).
+er_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
+	get_value(Attr => ValueNew, Rels), % buscar para propiedad
+	extension_or_object(ValueNew, Subjs, KB_Original),
+	package_relation(Insts, Subjs, [], Results_A).
+	% ignore(er_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	% append(Results_A, Results_B, Results_C), % agregar resultos
+	% ignore(er_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % derth scan with new value
+	% append(Results_C, Results_D, Results) % agregar resultos
+	% ;
+	% extension_class(ValueNew, Subjs, KB_Original),
+	% package_relation(Insts, Subjs, [], Results_A),
+	% ignore(er_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	% append(Results_A, Results_B, Results_C), % agregar resultos
+	% ignore(er_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % derth scan with same value
+	% append(Results_C, Results_D, Results). % agregar resultos
+er_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- er_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
+er_madre(_, _, _, [], _, []).
 
-ec_combi([NomClase|T], Ids, Ids_Nuevo, KB_Original) :-
-	extension_class(NomClase, Ids_A, KB_Original),
-	not_empty(Ids_A), % ensegurar que clase por este nombre existe
-	append(Ids, Ids_A, Ids_B),
-	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original)
-	; append(Ids, [NomClase], Ids_B), % si no existe, es id
-	ec_combi(T, Ids_B, Ids_Nuevo, KB_Original).
-ec_combi([], Ids, Ids, _).
+% TODO need to have extension of object be the object itself if relation with object
 
-pack_2d([Name|T], Ids, Results, Results_Nuevo) :- 
-	append(Results, [Name:Ids], Results_A),
-	pack_2d(T, Ids, Results_A, Results_Nuevo).
-pack_2d([], _, Results, Results).
+not_empty([_|_]).
 
-% Buscar una clase que tiene esa relación
-er_find_rel(Attr, Results, KB_Original, [class(NomClase,_,_,Rels,Insts_A)|T]) :- 
-	get_all_values(Attr, Rels, [], Subjs_A), % get all relations
-	not_empty(Subjs_A),
-	ec_combi(Subjs_A, [], Ids_A, KB_Original), % get extensions of those clases
-	extension_class(NomClase, Ids_B, KB_Original), % get my extensions
-	pack_2d(Ids_B, Ids_A, [], Results_A), % pack
-	er_find_rel(Attr, Results_B, KB_Original, T),
-	append(Results_A, Results_B, Results).
+% look for the extension of a class. if none exist, consider the class an object
+extension_or_object(NomClase, Insts, KB_Original) :-
+	extension_class(NomClase, Subjs, KB_Original),
+	not_empty(Subjs),
+	append(Subjs, [], Insts)
+	; append([], [NomClase], Insts).
+er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
+	get_value(Attr => Value, Rels), % buscar para propiedad
+	extension_or_object(Value, Subjs, KB_Original),
+	package_relation(Insts, Subjs, [], Results_A),
+	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C),
+	ignore(er_madre(Attr, Subjs, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
+	append(Results_C, Results_D, Results)
 	; 
-	%ignore(ec_madre(NomClase, Iters_A, KB_Original, KB_Original)),
-	er_find_rel(Attr, Results, KB_Original, T).
-er_find_rel(Attr, Results, KB_Original, [_|T]) :- er_find_rel(Attr, Results, KB_Original, T).
-er_find_rel(_, [], _, []).
+	ignore(er_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)),
+	er_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original),
+	append(Results_A, Results_B, Results).
+er_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- er_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
+er_find_root(_, _, [], _, []).
+
+% TODO para objectos afuera del parte "afectado" por la propiedad, buscar para individuos que sí lo tienen
+
+extension_relacion(Attr, Results, KB_Original) :- er_find_root(top, Attr, Results, KB_Original, KB_Original).
