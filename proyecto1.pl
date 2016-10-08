@@ -335,76 +335,86 @@ extension_class(NomClase, Ids, KB_Original) :-
 
 %****************************************************************
 % 1b. Extensiones de una propiedad
+%
+% Usage: extension_propiedad(Attr, ExtensionesConValorDeProp, KnowledgeBase)
 %****************************************************************
 
-% Recuperar un valor dado un attributo y una lista de propiedades
+% Recuperar un valor de una lista de propiedades, dado un attributo.
+%  Evalua a falso si el valor no existe.
 get_value(Attr => Value, [Attr => Value|_]).
 get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 
-% Dado un Valor, convertir instancias de la forma [id=>A,[],[], id=>B,[],[]]
-% a [A:Valor, B:Valor]
-%
-% TODO si la instancia ya tiene un valor definido por el atributo dado,
-% entonces utiliza eso en vez de Valor
-package(Value, [[id => Name,_,_]| T], Insts, Insts_New) :-
-	append(Insts, [Name:Value], Insts_Tmp),
-	package(Value, T, Insts_Tmp, Insts_New).
-package(_, [], Insts, Insts).
+% Empacar una lista de objectos a la forma "id:valor"
+%  Attr			Attributo del valor de buscar
+%  Value		Valor defaulto
+%  ...			Objecto al head
+%  Insts		Lista de objectos ya en la nueva forma, pasa [] al inicio
+%  Insts_new	Lista de objectos de devolver
+package(Attr, Value, [[id => Name,props => Props,_]| T], Insts, Insts_New) :-
+	get_value(Attr => ValueNew, Props), % buscar para propiedad
+	append(Insts, [Name:ValueNew], Insts_Tmp), % existe, sobreescribir default
+	package(Attr, Value, T, Insts_Tmp, Insts_New) % empacar
+	; 
+	append(Insts, [Name:Value], Insts_Tmp), % no existe, el default aplica
+	package(Attr, Value, T, Insts_Tmp, Insts_New). % empacar
+package(_, _, [], Insts, Insts).
 
+% Propagar un attributo y un valor a todos los instancias en el árbol bajo
+% una clase especifica.
+%
+%  Attr				Attributo del valor de buscar
+%  Value			Valor defaulto
+%  NomClaseMadre	Buscar clases con Madre con este nombre
+%  Results			Resultados de devolver
+%  KB_Original		KB
+%  ...				Clase al head
 ep_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
-	get_value(Attr => ValueNew, Props), % check prop match match to generate new value, if exists
-	package(ValueNew, Insts_A, [], Results_A), % apply prop to instances
-	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)), % continue scanning with old value
-	append(Results_A, Results_B, Results_C),
+	get_value(Attr => ValueNew, Props), % buscar para propiedad
+	package(Attr, ValueNew, Insts_A, [], Results_A), % existe, actualizar valor
+	% seguir escaneando lateralmente, pero con el valor original
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C), % agregar resultos
+	% seguir escaneando en profundidad, pero ya con el valor nuevo
 	ignore(ep_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with new value
-	append(Results_C, Results_D, Results)
+	append(Results_C, Results_D, Results) % agregar resultos
 	;
-	package(Value, Insts_A, [], Results_A),
-	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)), % continue scanning with same value
-	append(Results_A, Results_B, Results_C),
+	% este clase no tiene ninguna valor por ese attributo definido
+	package(Attr, Value, Insts_A, [], Results_A),
+	% seguir escaneando lateralmente con el valor original
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C), % agregar resultos
+	% seguir escaneando en profundidad con el valor original
 	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with same value
-	append(Results_C, Results_D, Results).
+	append(Results_C, Results_D, Results). % agregar resultos
 ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
 ep_madre(_, _, _, [], _, []).
 
-% search for the top-most class that defines the given property
+% Buscar desde el inicio del árbol por los clases más arribas que tienen
+%  el attributo dado especificado
+%
+%  NomClaseMadre	Buscar clases con Madre con este nombre
+%  Attr				Attributo del valor de buscar
+%  Results			Resultados de devolver
+%  KB_Original		KB
+%  ...				Clase al head
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
-	get_value(Attr => Value, Props), % find property
-	package(Value, Insts_A, [], Results_A), % found, apply 
-	ignore(ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)), % continue breadth scan
-	append(Results_A, Results_B, Results_C), % add those results
+	get_value(Attr => Value, Props), % buscar para propiedad
+	package(Attr, Value, Insts_A, [], Results_A), % existe, applicarlo a instancias
+	% seguir escaneando lateralmente
+	ignore(ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C),
+	% propagar ese valor encontrado a todos los hijos de este clase también
 	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
-	append(Results_C, Results_D, Results) % append results
-	; ignore(ep_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)), % if property doesnt exist continue breadth scan
-	ep_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original), % continue depth scan
-	append(Results_A, Results_B, Results). % add those results
+	append(Results_C, Results_D, Results)
+	; 
+	% si la propiedad no fue encontrado, seguir buscando lateralmente
+	ignore(ep_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)),
+	% y seguir buscando en profundidad también. nota que cuando se encuentra
+	% una clase con la propiedad, ya convierte a propagando en profundidad
+	% en vez de escaneando
+	ep_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original),
+	append(Results_A, Results_B, Results).
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
 extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
-	
-
-% Dado el nombre de un attributo, buscar por todos los clases (!) que tienen
-% una propiedad con el mismo attributo. Luego asignar ese valor a todos 
-% los instancias (!) de ese clase
-%
-% TODO por todos que tienen este NomClase como su Madre, package() sus
-% instancias con el mismo valor. Si esas hijo-clases tienen una definición
-% para este propiedad, cambia a esa valor.
-%
-% propagate_propiedad(NomClaseMadre, Attr, Valor, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
-%	...
-%
-% ec_propiedad(Attr, Results, KB_Original, [class(NomClase,_,Props,_,Insts_A)|T]) :-
-% 	get_value(Attr => Value, Props),
-% 	package(Value, Insts_A, [], Results_A),
-% 	ignore(ec_propiedad(Attr, Results_B, KB_Original, T)),
-% 	append(Results_A, Results_B, Results_C),
-% 	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)),
-% 	append(Results_C, Results_D, Results)
-% 	; ec_propiedad(Attr, Results, KB_Original, T).
-% ec_propiedad(_, [], _, []).
-% 	
-% ec_propiedad(_, Insts, KB_Original, [_|T]) :- ec(_, Insts, KB_Original, T).
-% % TODO
-% ec_propiedad(_, [], _, []).
