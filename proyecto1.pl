@@ -262,22 +262,73 @@ reemplaza_elemento(Elemento_A,Elemento_B,[H|T],[H|R]):-
 
 %usage open_kb('ruta',KB),verifica_clase(clase,Resp,KB).
 
-verifica_clase(_,'No sé',[]).
-verifica_clase(NomClase,'No',[clase(not(NomClase),_,_,_,_)|_]).
-verifica_clase(NomClase,'Sí',[clase(NomClase,_,_,_,_)|_]).
-verifica_clase(NomClase,Resp,[_|T]):-
-	verifica_clase(NomClase,Resp,T).
+% verifica_clase(_,'No sé',[]).
+% verifica_clase(NomClase,'No',[clase(not(NomClase),_,_,_,_)|_]).
+% verifica_clase(NomClase,'Sí',[clase(NomClase,_,_,_,_)|_]).
+% verifica_clase(NomClase,Resp,[_|T]):-
+% 	verifica_clase(NomClase,Resp,T).
+% 
+% extension_clase_madre(NomClaseMadre, Exts, Exts_New, KB_Original, [clase(NomClase,NomClaseMadre, _, _, Insts)|T]) :- 
+% 	write(NomClase),
+% 	extension_clase(NomClase, Exts_A, Exts_B, KB_Original, KB_Original),
+% 	extension_clase_madre(NomClaseMadre, Exts_B, Exts_New, KB_Original, T).
+% 
+% extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, T) ; append(Exts, [], Exts_New). 
+% 
+% extension_clase(NomClase, Exts, Exts_New, KB_Original, [clase(NomClase,_, _, _, Insts)|T]) :- 
+% 	write(NomClase),
+% 	append(Exts, Insts, Exts_A),
+% 	extension_clase_madre(NomClase, Exts_A, Exts_New, KB_Original, KB_Original).
+% 
+% extension_clase(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase(NomClase, Exts, Exts_New, KB_Original, T).
 
-extension_clase_madre(NomClaseMadre, Exts, Exts_New, KB_Original, [clase(NomClase,NomClaseMadre, _, _, Insts)|T]) :- 
-	write(NomClase),
-	extension_clase(NomClase, Exts_A, Exts_B, KB_Original, KB_Original),
-	extension_clase_madre(NomClaseMadre, Exts_B, Exts_New, KB_Original, T).
+%****************************************************************
+% 1a. Extensiones de una clase
+%
+% Usage: extension_clase(NomClase, ExtensionesPorId, KnowledgeBase)
+%****************************************************************
 
-extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase_madre(NomClase, Exts, Exts_New, KB_Original, T) ; append(Exts, [], Exts_New). 
+% Buscar clases que tiene este nombre como su madre
+ec_madre(NomClaseMadre, Exts, KB_Original, [clase(NomClase,NomClaseMadre,_,_,Insts_A)|T]) :-
+	% Seguir buscando en T porque es posible que hay múltiples que tiene
+	%  NomClaseMadre como su madre. Pero ignore() el resultado porque
+	%  queremos ejecutar lo siguiente si esa busqueda falla o no.
+	ignore(ec_madre(NomClaseMadre, Insts_B, KB_Original, T)),
+	% Aggregar los instancias de este clase con los instancias que la
+	%  busqueda encontró
+	append(Insts_A, Insts_B, Insts_C),
+	% Empezar una nueva busqueda por clases que tiene este clase como
+	%  madre. Otra vez, si ningún tal clase existe no nos importamos si
+	%  el resultado es verdadero o falso, queremos seguir con append
+	ignore(ec_madre(NomClase, Insts_D, KB_Original, KB_Original)),
+	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
+	append(Insts_C, Insts_D, Exts).
+% Recursión. Si NomClase no corresponde con el valor de Madre de este clase, seguir con el resto de la lista
+ec_madre(NomClaseMadre, Exts, KB_Original, [_|T]) :- ec_madre(NomClaseMadre, Exts, KB_Original, T).
+% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
+ec_madre(_, [], _, []).
 
-extension_clase(NomClase, Exts, Exts_New, KB_Original, [clase(NomClase,_, _, _, Insts)|T]) :- 
-	write(NomClase),
-	append(Exts, Insts, Exts_A),
-	extension_clase_madre(NomClase, Exts_A, Exts_New, KB_Original, KB_Original).
+% Buscar clase que tiene este nombre como su nombre
+ec(NomClase, Insts, KB_Original, [clase(NomClase,_,_,_,Insts_A)|_]) :-
+	% Empezar una nueva busqueda por clases que tiene este clase como
+	%  su madre. Pero ignore() el resultado porque queremos ejecutar lo 
+	% siguiente si esa busqueda falla o no.
+	ignore(ec_madre(NomClase, Insts_B, KB_Original, KB_Original)),
+	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
+	append(Insts_A, Insts_B, Insts).
+	% No buscamos otras clases dado que no puede existir dos clases
+	% del mismo nombre
+% Recursión. Si NomClase no corresponde con el valor de Madre de este clase, seguir con el resto de la lista
+ec(NomClase, Exts, KB_Original, [_|T]) :- ec(NomClase, Exts, KB_Original, T).
+% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
+ec(_, [], _, []).
 
-extension_clase(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_clase(NomClase, Exts, Exts_New, KB_Original, T).
+% Convertir una lista de objectos a una lista de sus ids
+insts_ids([[id => Name,_,_]| T], Ids, Ids_New) :-
+	append(Ids, [Name], Ids_Tmp),
+	insts_ids(T, Ids_Tmp, Ids_New).
+insts_ids([], Ids, Ids).
+
+extension_clase(NomClase, Ids, KB_Original) :-
+	ec(NomClase, Insts_Raw, KB_Original, KB_Original),
+	insts_ids(Insts_Raw, [], Ids).
