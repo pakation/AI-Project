@@ -67,7 +67,7 @@ agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[class(N
 agrega_objeto_clase(NomClase,NomObjeto,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels,Insts_New)|T]) :- 
 	append(Insts, [[id=>NomObjeto,[],[]]], Insts_New).
 agrega_objeto_clase(NomClase,NomObjeto,[H|T],[H|R]) :- 
-	agrega_objeto_class(NomClase, NomObjeto, T, R).
+	agrega_objeto_clase(NomClase, NomObjeto, T, R).
 
 %****************************************************************
 % 2b. Agrega una nueva propiedad a una clase
