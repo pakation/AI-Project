@@ -394,7 +394,7 @@ ep_objecto(Attr, [[id=>Name,props => Props,_]|T], [Name:Value]) :-
 	; ep_objecto(Attr, T, [Name:Value]).
 ep_objecto(_, [], []).
 
-% Buscar desde el inicio del árbol por los clases más arribas que tienen
+% Buscar desde el inicio del árbol para las clases más arribas que tienen
 %  el attributo dado especificado
 %
 %  NomClaseMadre	Buscar clases con Madre con este nombre
@@ -425,8 +425,6 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
-% TODO para objectos afuera del parte "afectado" por la propiedad, buscar para individuos que sí lo tienen
-
 extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
 
 %****************************************************************
@@ -435,67 +433,111 @@ extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Resul
 % Usage: extension_relación(Typ, Extensiones, KnowledgeBase)
 %****************************************************************
 
-% look for the extension of a class. if none exist, consider the class an object
+% Buscar por la extension de una clase. Si ningun objectos existen,
+%  considerar la clase una objecto.
 extension_or_object(NomClase, Insts, KB_Original) :-
 	extension_class(NomClase, Subjs, KB_Original),
 	not_empty(Subjs),
 	append(Subjs, [], Insts)
 	; append([], [NomClase], Insts).
 
+% Presentar unos objectos con sus relaciones resolvados. Si el objecto
+%  tiene algo más especifico, utilizar eso en vez.
+%
+%  Attr			Nombre de la relación
+%  ...			Lista de objectos quienes tienen esa relación
+%  Subjs		Lista de sujectos de la relación
+%  Results_New	Lista formatado como [ name :[ ... ] ]
+%  KB_Original	Knowledge base
 package_relation(Attr, [[id=>Name,_,rels=>Rels]|T], Subjs, Results, Results_New, KB_Original) :-
-	get_value(Attr => Value, Rels), % buscar para relacion
+	get_value(Attr => Value, Rels), % buscar para relación más especifica
 	extension_or_object(Value, SubjsNew, KB_Original),
 	append(Results, [Name:SubjsNew], Results_A),
 	package_relation(Attr, T, Subjs, Results_A, Results_New, KB_Original)
 	;
-	append(Results, [Name:Subjs], Results_A),
+	append(Results, [Name:Subjs], Results_A), % ningún más especifica existe
 	package_relation(Attr, T, Subjs, Results_A, Results_New, KB_Original).
 package_relation(_, [], _, Results, Results, _).
 
+% Buscar clases que tienen como madre una otra clase. Si esa nueva clase 
+%  tiene definido la relación que estamos buscando, devolver los instancias
+%  junto con el valor de esa relación. O si no, devolver los instancias con
+%  el valor que tiene la madre.
+%
+%  Attr				Nombre de la relación
+%  Valor			Valor que tiene la madre por este relación
+%  NomClaseMadre	Nombre de la clase madre
+%  Results			Instancias con sus relaciones
+%  KB_Original		Knowledge base
+%  ...				Lista de objectos quienes tienen esa relación
 er_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
 	get_value(Attr => ValueNew, Rels), % buscar para propiedad
 	extension_or_object(ValueNew, Subjs, KB_Original),
+	% seleccionar la nueva relación
 	package_relation(Attr, Insts, Subjs, [], Results_A, KB_Original),
+	% buscar en longitud primero
 	ignore(er_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C), % agregar resultos
+	% luego en profundidad
 	ignore(er_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with new value
 	append(Results_C, Results_D, Results) % agregar resultos
 	;
 	package_relation(Attr, Insts, Value, [], Results_A, KB_Original),
+	% buscar en longitud primero
 	ignore(er_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C), % agregar resultos
+	% luego en profundidad
 	ignore(er_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with same value
 	append(Results_C, Results_D, Results). % agregar resultos
 er_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- er_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
 er_madre(_, _, _, [], _, []).
 
-% TODO need to have extension of object be the object itself if relation with object
-
+% verdad syss no es vacío
 not_empty([_|_]).
 
+% Buscar un objecto o instancia solito que tiene definido la relación
+%
+%  Attr				Nombre de la relación
+%  ...				Lista de objectos para buscar
+%  ...				Formato para regresar
+%  KB_Original		Knowledge base
 er_objecto(Attr, [[id=>Name,_,rels => Rels]|T], [Name:Subjs], KB_Original) :-
 	get_value(Attr => Value, Rels), % buscar para relacion
-	extension_or_object(Value, Subjs, KB_Original)
-	; er_objecto(Attr, T, [Name:Subjs], KB_Original).
+	extension_or_object(Value, Subjs, KB_Original) % tiene la relación
+	; er_objecto(Attr, T, [Name:Subjs], KB_Original). % no tiene la relación
 er_objecto(_, [], [],_).
 
+% Buscar desde el inicio del árbol para las clases más arribas que tienen
+%  la relación dado especificado
+%
+%  NomClaseMadre	Buscar clases con Madre con este nombre
+%  Attr				Attributo del valor de buscar
+%  Results			Resultados de devolver
+%  KB_Original		KB
+%  ...				Clase al head
 er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
 	get_value(Attr => Value, Rels), % buscar para propiedad
 	extension_or_object(Value, Subjs, KB_Original),
+	% formatar la relación
 	package_relation(Attr, Insts, Subjs, [], Results_A, KB_Original),
+	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C),
+	% luego en profundidad
 	ignore(er_madre(Attr, Subjs, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
 	append(Results_C, Results_D, Results)
 	; 
+	% si no tiene la propiedad definido, todavía una de sus objectos puede
+	% tenerlo. así que busar entre sus objectos
 	er_objecto(Attr, Insts, Results_A, KB_Original),
+	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C),
+	% luego en profundidad
 	er_find_root(NomClase, Attr, Results_D, KB_Original, KB_Original),
 	append(Results_C, Results_D, Results).
 er_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- er_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 er_find_root(_, _, [], _, []).
 
-% TODO para objectos afuera del parte "afectado" por la propiedad, buscar para individuos que sí lo tienen
-
+% empezar desde top
 extension_relacion(Attr, Results, KB_Original) :- er_find_root(top, Attr, Results, KB_Original, KB_Original).
