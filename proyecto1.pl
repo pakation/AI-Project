@@ -151,6 +151,8 @@ extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Resul
 %****************************************************************
 % 2a. Agrega una nueva clase vacia.
 %****************************************************************
+
+agrega_clase(_,_,[],[]).
 agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[class(NomClase,Madre,[],[],[])],KB_Nuevo).
 
 %****************************************************************
@@ -174,6 +176,7 @@ agrega_objeto_clase(NomClase,NomObjeto,[H|T],[H|R]) :-
 
 % Propiedad debe estar en formato de atomo, atributo => valor, o not(atributo => valor)
 
+agrega_propiedad_clase(_,_,[],[]).
 agrega_propiedad_clase(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
 	append(Props, [Propiedad], Props_New).
 agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
@@ -183,6 +186,7 @@ agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :-
 % 2b. Agrega una nueva propiedad a un objeto 
 %****************************************************************
 
+agrega_propiedad_objeto(_,_,[],[]).
 agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
 	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
 	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
@@ -195,6 +199,7 @@ agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
 
 % Relacion debe estar en formato de atom, atributo => valor, o not(atributo => valor)
 
+agrega_relacion_clase(_,_,[],[]).
 agrega_relacion_clase(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
 	append(Rels, [Relacion], Rels_New).
 agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
@@ -204,6 +209,7 @@ agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :-
 % 2c. Agrega una nueva relacion a un objeto
 %****************************************************************
 
+agrega_relacion_objeto(_,_,[],[]).
 agrega_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
 	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
 	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
@@ -270,6 +276,7 @@ elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
 % 4a. Modificar nombre de una clase
 %****************************************************************
 
+modifica_nombre_clase(_,_,[],[]).
 modifica_nombre_clase(NomClase,NomClase_New,KB_Original,KB_Nuevo):-
 	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase_New,Madre,Props,Rels,Insts),KB_Original,KB_Aux),
 	actualiza_clase_madre(NomClase,NomClase_New,KB_Aux,KB_Aux1),
@@ -289,6 +296,7 @@ modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
 % 4b. Modificar valor de una propiedad de una clase
 %****************************************************************
 
+modifica_propiedad_clase(_,_,_,[],[]).
 modifica_propiedad_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
 	actualiza_valor(Propiedad, Valor, Props, Props_New).
 modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
@@ -298,6 +306,7 @@ modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :-
 % 4b. Modificar la propiedad de un objeto
 %****************************************************************
 
+modifica_propiedad_objeto(_,_,[],[]).
 modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo) :-
 	elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Aux),
 	agrega_propiedad_objeto(NomObjeto,Propiedad_New,KB_Aux,KB_Nuevo).
@@ -306,15 +315,17 @@ modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo
 % 4c. Modificar el valor de una relacion para una clase
 %****************************************************************
 
+modifica_relacion_clase(_,_,_,[],[]).
 modifica_relacion_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
 	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
-modifica_relacion_class(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	modifica_relacion_class(NomClase, Propiedad, Valor, T, R).
+modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
 	
 %****************************************************************
 % 4c. Modificar la relación de un objeto
 %****************************************************************
 
+modifica_relacion_objeto(_,_,[],[]).
 modifica_relacion_objeto(NomObjeto,Relacion,Relacion_New,KB_Original,KB_Nuevo) :-
 	elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Aux),
 	agrega_relacion_objeto(NomObjeto,Relacion_New,KB_Aux,KB_Nuevo).
