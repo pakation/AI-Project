@@ -84,7 +84,7 @@ agrega_objeto_clase(NomClase,NomObjeto,[H|T],[H|R]) :-
 agrega_propiedad_clase(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
 	append(Props, [Propiedad], Props_New).
 agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
-	agrega_propiedad_class(NomClase, Propiedad, T, R).
+	agrega_propiedad_clase(NomClase, Propiedad, T, R).
 
 %****************************************************************
 % 2b. Agrega una nueva propiedad a un objeto 
@@ -105,7 +105,7 @@ agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
 agrega_relacion_clase(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
 	append(Rels, [Relacion], Rels_New).
 agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
-	agrega_relacion_class(NomClase, Relacion, T, R).
+	agrega_relacion_clase(NomClase, Relacion, T, R).
 
 %****************************************************************
 % 2c. Agrega una nueva relacion a un objeto
@@ -183,7 +183,7 @@ modifica_nombre_clase(NomClase,NomClase_New,KB_Original,KB_Nuevo):-
 	actualiza_toda_relacion(NomClase,NomClase_New,KB_Aux1,KB_Nuevo).
 
 %****************************************************************
-% 4a. Modificar nombre de un objeto (Modificando)
+% 4a. Modificar nombre de un objeto
 %****************************************************************
 
 modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
