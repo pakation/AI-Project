@@ -11,49 +11,142 @@
 %*Knowledge-Base for Service Robots"                            *
 %****************************************************************
 
+%****************************************************************
+% 1a. Extensiones de una class
+%
+% Usage: extension_class(NomClase, ExtensionesPorId, KnowledgeBase)
+%****************************************************************
+
+% Buscar classs que tiene este nombre como su madre
+ec_madre(NomClaseMadre, Exts, KB_Original, [class(NomClase,NomClaseMadre,_,_,Insts_A)|T]) :-
+	% Seguir buscando en T porque es posible que hay múltiples que tiene
+	%  NomClaseMadre como su madre. Pero ignore() el resultado porque
+	%  queremos ejecutar lo siguiente si esa busqueda falla o no.
+	ignore(ec_madre(NomClaseMadre, Insts_B, KB_Original, T)),
+	% Aggregar los instancias de este class con los instancias que la
+	%  busqueda encontró
+	append(Insts_A, Insts_B, Insts_C),
+	% Empezar una nueva busqueda por classs que tiene este class como
+	%  madre. Otra vez, si ningún tal class existe no nos importamos si
+	%  el resultado es verdadero o falso, queremos seguir con append
+	ignore(ec_madre(NomClase, Insts_D, KB_Original, KB_Original)),
+	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
+	append(Insts_C, Insts_D, Exts).
+% Recursión. Si NomClase no corresponde con el valor de Madre de este class, seguir con el resto de la lista
+ec_madre(NomClaseMadre, Exts, KB_Original, [_|T]) :- ec_madre(NomClaseMadre, Exts, KB_Original, T).
+% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
+ec_madre(_, [], _, []).
+
+% Buscar class que tiene este nombre como su nombre
+ec(NomClase, Insts, KB_Original, [class(NomClase,_,_,_,Insts_A)|_]) :-
+	% Empezar una nueva busqueda por classs que tiene este class como
+	%  su madre. Pero ignore() el resultado porque queremos ejecutar lo 
+	% siguiente si esa busqueda falla o no.
+	ignore(ec_madre(NomClase, Insts_B, KB_Original, KB_Original)),
+	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
+	append(Insts_A, Insts_B, Insts).
+	% No buscamos otras classs dado que no puede existir dos classs
+	% del mismo nombre
+% Recursión. Si NomClase no corresponde con el valor de Madre de este class, seguir con el resto de la lista
+ec(NomClase, Exts, KB_Original, [_|T]) :- ec(NomClase, Exts, KB_Original, T).
+% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
+ec(_, [], _, []).
+
+% Convertir una lista de objectos a una lista de sus ids
+insts_ids([[id => Name,_,_]| T], Ids, Ids_New) :-
+	append(Ids, [Name], Ids_Tmp),
+	insts_ids(T, Ids_Tmp, Ids_New).
+insts_ids([], Ids, Ids).
+
+extension_class(NomClase, Ids, KB_Original) :-
+	ec(NomClase, Insts_Raw, KB_Original, KB_Original),
+	insts_ids(Insts_Raw, [], Ids).
 
 %****************************************************************
-% Carga y lectura de la base de conocimiento
+% 1b. Extensiones de una propiedad
+%
+% Usage: extension_propiedad(Attr, ExtensionesConValorDeProp, KnowledgeBase)
 %****************************************************************
 
-%KB open and save
+% Recuperar un valor de una lista de propiedades, dado un attributo.
+%  Evalua a falso si el valor no existe.
+get_value(Attr => Value, [Attr => Value|_]).
+get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 
-open_kb(Route,KB):-
-	open(Route,read,Stream),
-	readclauses(Stream,X),
-	close(Stream),
-	atom_to_term(X,KB).
+% Empacar una lista de objectos a la forma "id:valor"
+%  Attr			Attributo del valor de buscar
+%  Value		Valor defaulto
+%  ...			Objecto al head
+%  Insts		Lista de objectos ya en la nueva forma, pasa [] al inicio
+%  Insts_new	Lista de objectos de devolver
+package(Attr, Value, [[id => Name,props => Props,_]| T], Insts, Insts_New) :-
+	get_value(Attr => ValueNew, Props), % buscar para propiedad
+	append(Insts, [Name:ValueNew], Insts_Tmp), % existe, sobreescribir default
+	package(Attr, Value, T, Insts_Tmp, Insts_New) % empacar
+	; 
+	append(Insts, [Name:Value], Insts_Tmp), % no existe, el default aplica
+	package(Attr, Value, T, Insts_Tmp, Insts_New). % empacar
+package(_, _, [], Insts, Insts).
 
-save_kb(Route,KB):-
-	open(Route,write,Stream),
-	writeq(Stream,KB),
-	close(Stream).
+% Propagar un attributo y un valor a todos los instancias en el árbol bajo
+% una clase especifica.
+%
+%  Attr				Attributo del valor de buscar
+%  Value			Valor defaulto
+%  NomClaseMadre	Buscar clases con Madre con este nombre
+%  Results			Resultados de devolver
+%  KB_Original		KB
+%  ...				Clase al head
+ep_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
+	get_value(Attr => ValueNew, Props), % buscar para propiedad
+	package(Attr, ValueNew, Insts_A, [], Results_A), % existe, actualizar valor
+	% seguir escaneando lateralmente, pero con el valor original
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C), % agregar resultos
+	% seguir escaneando en profundidad, pero ya con el valor nuevo
+	ignore(ep_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with new value
+	append(Results_C, Results_D, Results) % agregar resultos
+	;
+	% este clase no tiene ninguna valor por ese attributo definido
+	package(Attr, Value, Insts_A, [], Results_A),
+	% seguir escaneando lateralmente con el valor original
+	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C), % agregar resultos
+	% seguir escaneando en profundidad con el valor original
+	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with same value
+	append(Results_C, Results_D, Results). % agregar resultos
+ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
+ep_madre(_, _, _, [], _, []).
 
-readclauses(InStream,W) :-
-        get0(InStream,Char),
-        checkCharAndReadRest(Char,Chars,InStream),
-	atom_chars(W,Chars).
+% Buscar desde el inicio del árbol por los clases más arribas que tienen
+%  el attributo dado especificado
+%
+%  NomClaseMadre	Buscar clases con Madre con este nombre
+%  Attr				Attributo del valor de buscar
+%  Results			Resultados de devolver
+%  KB_Original		KB
+%  ...				Clase al head
+ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
+	get_value(Attr => Value, Props), % buscar para propiedad
+	package(Attr, Value, Insts_A, [], Results_A), % existe, applicarlo a instancias
+	% seguir escaneando lateralmente
+	ignore(ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
+	append(Results_A, Results_B, Results_C),
+	% propagar ese valor encontrado a todos los hijos de este clase también
+	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
+	append(Results_C, Results_D, Results)
+	; 
+	% si la propiedad no fue encontrado, seguir buscando lateralmente
+	ignore(ep_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)),
+	% y seguir buscando en profundidad también. nota que cuando se encuentra
+	% una clase con la propiedad, ya convierte a propagando en profundidad
+	% en vez de escaneando
+	ep_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original),
+	append(Results_A, Results_B, Results).
+ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
+ep_find_root(_, _, [], _, []).
 
-checkCharAndReadRest(-1,[],_) :- !.  % End of Stream	
-checkCharAndReadRest(end_of_file,[],_) :- !.
-
-checkCharAndReadRest(Char,[Char|Chars],InStream) :-
-        get0(InStream,NextChar),
-        checkCharAndReadRest(NextChar,Chars,InStream).
-
-%compile an atom string of characters as a prolog term
-atom_to_term(ATOM, TERM) :-
-	atom(ATOM),
-	atom_to_chars(ATOM,STR),
-	atom_to_chars('.',PTO),
-	append(STR,PTO,STR_PTO),
-	read_from_chars(STR_PTO,TERM).
-
-:- op(800,xfx,'=>').
-
-%****************************************************************
-% 1a.
-%****************************************************************
+extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
 
 %****************************************************************
 % 2a. Agrega una nueva clase vacia.
@@ -313,144 +406,43 @@ actualiza_relacion(Valor,Valor_Nuevo,[not(Atributo=>Valor)|T],[not(Atributo=>Val
 	actualiza_relacion(Valor,Valor_Nuevo,T,R).
 actualiza_relacion(Valor,Valor_Nuevo,[H|T],[H|R]):-
 	actualiza_relacion(Valor,Valor_Nuevo,T,R).
-
-%--------------------------------------------------------------------------------------------------
-%--------------------------------------------------------------------------------------------------
-%--------------------------------------------------------------------------------------------------
-
+	
 %****************************************************************
-% 1a. Extensiones de una class
-%
-% Usage: extension_class(NomClase, ExtensionesPorId, KnowledgeBase)
+% Carga y lectura de la base de conocimiento
 %****************************************************************
 
-% Buscar classs que tiene este nombre como su madre
-ec_madre(NomClaseMadre, Exts, KB_Original, [class(NomClase,NomClaseMadre,_,_,Insts_A)|T]) :-
-	% Seguir buscando en T porque es posible que hay múltiples que tiene
-	%  NomClaseMadre como su madre. Pero ignore() el resultado porque
-	%  queremos ejecutar lo siguiente si esa busqueda falla o no.
-	ignore(ec_madre(NomClaseMadre, Insts_B, KB_Original, T)),
-	% Aggregar los instancias de este class con los instancias que la
-	%  busqueda encontró
-	append(Insts_A, Insts_B, Insts_C),
-	% Empezar una nueva busqueda por classs que tiene este class como
-	%  madre. Otra vez, si ningún tal class existe no nos importamos si
-	%  el resultado es verdadero o falso, queremos seguir con append
-	ignore(ec_madre(NomClase, Insts_D, KB_Original, KB_Original)),
-	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
-	append(Insts_C, Insts_D, Exts).
-% Recursión. Si NomClase no corresponde con el valor de Madre de este class, seguir con el resto de la lista
-ec_madre(NomClaseMadre, Exts, KB_Original, [_|T]) :- ec_madre(NomClaseMadre, Exts, KB_Original, T).
-% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
-ec_madre(_, [], _, []).
+%KB open and save
 
-% Buscar class que tiene este nombre como su nombre
-ec(NomClase, Insts, KB_Original, [class(NomClase,_,_,_,Insts_A)|_]) :-
-	% Empezar una nueva busqueda por classs que tiene este class como
-	%  su madre. Pero ignore() el resultado porque queremos ejecutar lo 
-	% siguiente si esa busqueda falla o no.
-	ignore(ec_madre(NomClase, Insts_B, KB_Original, KB_Original)),
-	% Append estas nuevas instancias, si hay, y devolver el resultado en Exts
-	append(Insts_A, Insts_B, Insts).
-	% No buscamos otras classs dado que no puede existir dos classs
-	% del mismo nombre
-% Recursión. Si NomClase no corresponde con el valor de Madre de este class, seguir con el resto de la lista
-ec(NomClase, Exts, KB_Original, [_|T]) :- ec(NomClase, Exts, KB_Original, T).
-% Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
-ec(_, [], _, []).
+open_kb(Route,KB):-
+	open(Route,read,Stream),
+	readclauses(Stream,X),
+	close(Stream),
+	atom_to_term(X,KB).
 
-% Convertir una lista de objectos a una lista de sus ids
-insts_ids([[id => Name,_,_]| T], Ids, Ids_New) :-
-	append(Ids, [Name], Ids_Tmp),
-	insts_ids(T, Ids_Tmp, Ids_New).
-insts_ids([], Ids, Ids).
+save_kb(Route,KB):-
+	open(Route,write,Stream),
+	writeq(Stream,KB),
+	close(Stream).
 
-extension_class(NomClase, Ids, KB_Original) :-
-	ec(NomClase, Insts_Raw, KB_Original, KB_Original),
-	insts_ids(Insts_Raw, [], Ids).
+readclauses(InStream,W) :-
+        get0(InStream,Char),
+        checkCharAndReadRest(Char,Chars,InStream),
+	atom_chars(W,Chars).
 
-%****************************************************************
-% 1b. Extensiones de una propiedad
-%
-% Usage: extension_propiedad(Attr, ExtensionesConValorDeProp, KnowledgeBase)
-%****************************************************************
+checkCharAndReadRest(-1,[],_) :- !.  % End of Stream	
+checkCharAndReadRest(end_of_file,[],_) :- !.
 
-% Recuperar un valor de una lista de propiedades, dado un attributo.
-%  Evalua a falso si el valor no existe.
-get_value(Attr => Value, [Attr => Value|_]).
-get_value(Elemento, [_|T]) :- get_value(Elemento, T).
+checkCharAndReadRest(Char,[Char|Chars],InStream) :-
+        get0(InStream,NextChar),
+        checkCharAndReadRest(NextChar,Chars,InStream).
 
-% Empacar una lista de objectos a la forma "id:valor"
-%  Attr			Attributo del valor de buscar
-%  Value		Valor defaulto
-%  ...			Objecto al head
-%  Insts		Lista de objectos ya en la nueva forma, pasa [] al inicio
-%  Insts_new	Lista de objectos de devolver
-package(Attr, Value, [[id => Name,props => Props,_]| T], Insts, Insts_New) :-
-	get_value(Attr => ValueNew, Props), % buscar para propiedad
-	append(Insts, [Name:ValueNew], Insts_Tmp), % existe, sobreescribir default
-	package(Attr, Value, T, Insts_Tmp, Insts_New) % empacar
-	; 
-	append(Insts, [Name:Value], Insts_Tmp), % no existe, el default aplica
-	package(Attr, Value, T, Insts_Tmp, Insts_New). % empacar
-package(_, _, [], Insts, Insts).
+%compile an atom string of characters as a prolog term
+atom_to_term(ATOM, TERM) :-
+	atom(ATOM),
+	atom_to_chars(ATOM,STR),
+	atom_to_chars('.',PTO),
+	append(STR,PTO,STR_PTO),
+	read_from_chars(STR_PTO,TERM).
 
-% Propagar un attributo y un valor a todos los instancias en el árbol bajo
-% una clase especifica.
-%
-%  Attr				Attributo del valor de buscar
-%  Value			Valor defaulto
-%  NomClaseMadre	Buscar clases con Madre con este nombre
-%  Results			Resultados de devolver
-%  KB_Original		KB
-%  ...				Clase al head
-ep_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
-	get_value(Attr => ValueNew, Props), % buscar para propiedad
-	package(Attr, ValueNew, Insts_A, [], Results_A), % existe, actualizar valor
-	% seguir escaneando lateralmente, pero con el valor original
-	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
-	append(Results_A, Results_B, Results_C), % agregar resultos
-	% seguir escaneando en profundidad, pero ya con el valor nuevo
-	ignore(ep_madre(Attr, ValueNew, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with new value
-	append(Results_C, Results_D, Results) % agregar resultos
-	;
-	% este clase no tiene ninguna valor por ese attributo definido
-	package(Attr, Value, Insts_A, [], Results_A),
-	% seguir escaneando lateralmente con el valor original
-	ignore(ep_madre(Attr, Value, NomClaseMadre, Results_B, KB_Original, T)),
-	append(Results_A, Results_B, Results_C), % agregar resultos
-	% seguir escaneando en profundidad con el valor original
-	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % depth scan with same value
-	append(Results_C, Results_D, Results). % agregar resultos
-ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
-ep_madre(_, _, _, [], _, []).
+:- op(800,xfx,'=>').
 
-% Buscar desde el inicio del árbol por los clases más arribas que tienen
-%  el attributo dado especificado
-%
-%  NomClaseMadre	Buscar clases con Madre con este nombre
-%  Attr				Attributo del valor de buscar
-%  Results			Resultados de devolver
-%  KB_Original		KB
-%  ...				Clase al head
-ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,Props,_,Insts_A)|T]) :-
-	get_value(Attr => Value, Props), % buscar para propiedad
-	package(Attr, Value, Insts_A, [], Results_A), % existe, applicarlo a instancias
-	% seguir escaneando lateralmente
-	ignore(ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
-	append(Results_A, Results_B, Results_C),
-	% propagar ese valor encontrado a todos los hijos de este clase también
-	ignore(ep_madre(Attr, Value, NomClase, Results_D, KB_Original, KB_Original)), % propogate in depth scan
-	append(Results_C, Results_D, Results)
-	; 
-	% si la propiedad no fue encontrado, seguir buscando lateralmente
-	ignore(ep_find_root(NomClaseMadre, Attr, Results_A, KB_Original, T)),
-	% y seguir buscando en profundidad también. nota que cuando se encuentra
-	% una clase con la propiedad, ya convierte a propagando en profundidad
-	% en vez de escaneando
-	ep_find_root(NomClase, Attr, Results_B, KB_Original, KB_Original),
-	append(Results_A, Results_B, Results).
-ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
-ep_find_root(_, _, [], _, []).
-
-extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
