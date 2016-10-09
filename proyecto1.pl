@@ -410,13 +410,12 @@ modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
 	actualiza_toda_relacion(NomObjeto,NomObjeto_New,KB_Aux,KB_Nuevo).
 
 %****************************************************************
-% 4b. Modificar valor de una propiedad de una clase
+% 4b. Modificar una propiedad de una clase
 %****************************************************************
 
-modifica_propiedad_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
-	actualiza_valor(Propiedad, Valor, Props, Props_New).
-modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	modifica_propiedad_clase(NomClase, Propiedad, Valor, T, R).
+modifica_propiedad_clase(NomClase,Propiedad,Propiedad_New,KB_Original,KB_Nuevo) :-
+	elimina_propiedad_clase(NomClase,Propiedad,KB_Original,KB_Aux),
+	agrega_propiedad_clase(NomClase,Propiedad_New,KB_Aux,KB_Nuevo).
 
 %****************************************************************
 % 4b. Modificar la propiedad de un objeto
@@ -427,13 +426,12 @@ modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo
 	agrega_propiedad_objeto(NomObjeto,Propiedad_New,KB_Aux,KB_Nuevo).
 
 %****************************************************************
-% 4c. Modificar el valor de una relacion para una clase
+% 4c. Modificar una relación de una clase
 %****************************************************************
 
-modifica_relacion_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
-	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
-modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
+modifica_relacion_clase(NomClase,Relacion,Relacion_New,KB_Original,KB_Nuevo) :-
+		elimina_relacion_clase(NomClase,Relacion,KB_Original,KB_Aux),
+		agrega_relacion_clase(NomClase,Relacion_New,KB_Aux,KB_Nuevo).
 	
 %****************************************************************
 % 4c. Modificar la relación de un objeto
