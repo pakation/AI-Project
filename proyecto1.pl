@@ -71,6 +71,9 @@ extension_class(NomClase, Ids, KB_Original) :-
 % Recuperar un valor de una lista de propiedades, dado un attributo.
 %  Evalua a falso si el valor no existe.
 get_value(Attr => Value, [Attr => Value|_]).
+get_value(Attr => yes, [Attr|_]).
+get_value(Attr => no, [not(Attr)|_]).
+get_value(Attr => not(Value), [not(Attr => Value)|_]).
 get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 
 % Empacar una lista de objectos a la forma "id:valor"
@@ -164,6 +167,8 @@ extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Resul
 
 % Buscar por la extension de una clase. Si ningun objectos existen,
 %  considerar la clase una objecto.
+extension_or_object(not(Algo), not(Insts), KB_Original) :-
+	extension_or_object(Algo, Insts, KB_Original).
 extension_or_object(NomClase, Insts, KB_Original) :-
 	extension_class(NomClase, Subjs, KB_Original),
 	not_empty(Subjs),
@@ -179,7 +184,7 @@ extension_or_object(NomClase, Insts, KB_Original) :-
 %  Results_New	Lista formatado como [ name :[ ... ] ]
 %  KB_Original	Knowledge base
 package_relation(Attr, [[id=>Name,_,rels=>Rels]|T], Subjs, Results, Results_New, KB_Original) :-
-	get_value(Attr => Value, Rels), % buscar para relación más especifica
+	get_value(Attr => Value, Rels), % buscar si objecto especifica una relación
 	extension_or_object(Value, SubjsNew, KB_Original),
 	append(Results, [Name:SubjsNew], Results_A),
 	package_relation(Attr, T, Subjs, Results_A, Results_New, KB_Original)
