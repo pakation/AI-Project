@@ -11,277 +11,6 @@
 %*Knowledge-Base for Service Robots"                            *
 %****************************************************************
 
-
-%****************************************************************
-% Carga y lectura de la base de conocimiento
-%****************************************************************
-
-%KB open and save
-
-open_kb(Route,KB):-
-	open(Route,read,Stream),
-	readclauses(Stream,X),
-	close(Stream),
-	atom_to_term(X,KB).
-
-save_kb(Route,KB):-
-	open(Route,write,Stream),
-	writeq(Stream,KB),
-	close(Stream).
-
-readclauses(InStream,W) :-
-        get0(InStream,Char),
-        checkCharAndReadRest(Char,Chars,InStream),
-	atom_chars(W,Chars).
-
-checkCharAndReadRest(-1,[],_) :- !.  % End of Stream	
-checkCharAndReadRest(end_of_file,[],_) :- !.
-
-checkCharAndReadRest(Char,[Char|Chars],InStream) :-
-        get0(InStream,NextChar),
-        checkCharAndReadRest(NextChar,Chars,InStream).
-
-%compile an atom string of characters as a prolog term
-atom_to_term(ATOM, TERM) :-
-	atom(ATOM),
-	atom_to_chars(ATOM,STR),
-	atom_to_chars('.',PTO),
-	append(STR,PTO,STR_PTO),
-	read_from_chars(STR_PTO,TERM).
-
-:- op(800,xfx,'=>').
-
-%****************************************************************
-% 1a.
-%****************************************************************
-
-%****************************************************************
-% 2a. Agrega una nueva class vacia.
-%****************************************************************
-agrega_class(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[class(NomClase,Madre,[],[],[])],KB_Nuevo).
-
-%****************************************************************
-% 2a. Agrega un nuevo objeto a una class
-%****************************************************************
-agrega_objeto_class(NomClase,NomObjeto,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels,Insts_New)|T]) :- 
-	append(Insts, [[id=>NomObjeto,[],[]]], Insts_New).
-agrega_objeto_class(NomClase,NomObjeto,[H|T],[H|R]) :- 
-	agrega_objeto_class(NomClase, NomObjeto, T, R).
-
-%****************************************************************
-% 2b. Agrega una nueva propiedad a una class
-%****************************************************************
-
-% Usage: open_kb("KB_Original.txt", KB_Original), agrega_propiedad_class(animal, alfa, beta, KB_Original, KB_Nuevo).
-
-% modificar elemento concordante, este forma la basis del abajo
-% foo([alfa|T], [beta|T]).
-% foo([H|T], [H|R]) :- foo(T,R).
-
-% Propiedad debe estar en formato de atomo, atributo => valor, o not(atributo => valor)
-
-agrega_propiedad_class(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
-	append(Props, [Propiedad], Props_New).
-agrega_propiedad_class(NomClase,Propiedad,[H|T],[H|R]) :- 
-	agrega_propiedad_class(NomClase, Propiedad, T, R).
-
-%****************************************************************
-% 2b. Agrega una nueva propiedad a un objeto 
-%****************************************************************
-
-agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
-	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
-	append(PropsObjeto,[Propiedad],PropsObjeto_New).
-
-%****************************************************************
-% 2c. Agrega una nueva relacion a una class
-%****************************************************************
-
-% Relacion debe estar en formato de atom, atributo => valor, o not(atributo => valor)
-
-agrega_relacion_class(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
-	append(Rels, [Relacion], Rels_New).
-agrega_relacion_class(NomClase,Relacion,[H|T],[H|R]) :- 
-	agrega_relacion_class(NomClase, Relacion, T, R).
-
-%****************************************************************
-% 2c. Agrega una nueva relacion a un objeto
-%****************************************************************
-
-agrega_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
-	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
-	append(RelsObjeto,[Relacion],RelsObjeto_New).
-
-%****************************************************************
-% Eliminar un elemento de una lista
-%****************************************************************
-
-elimina_elemento(Elemento, [Elemento|T], T).
-elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
-
-%****************************************************************
-% 3a. Eliminar una class
-%****************************************************************
-
-elimina_class(NomClase, [class(NomClase,_,_,_,_)|T], T).
-elimina_class(NomClase, [H|T], [H|R]) :- elimina_class(NomClase, T,R).
-
-%****************************************************************
-% 3a. Eliminar un objeto
-%****************************************************************
-
-elimina_objeto(NomObjeto,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto,_,_],Insts),
-	elimina_elemento([id=>NomObjeto,_,_],Insts,Insts_New).
-
-%****************************************************************
-% 3b. Eliminar una propiedad de una class
-%****************************************************************
-
-elimina_propiedad_class(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
-	elimina_elemento(Propiedad, Props, Props_New).
-elimina_propiedad_class(NomClase,Propiedad,[H|T],[H|R]) :- 
-	elimina_propiedad_class(NomClase, Propiedad, T, R).
-
-%****************************************************************
-% 3b. Eliminar una propiedad de un objeto
-%****************************************************************
-
-elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
-	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
-	elimina_elemento(Propiedad,PropsObjeto,PropsObjeto_New).
-
-%****************************************************************
-% 3c. Eliminar una relacion de una class
-%****************************************************************
-
-elimina_relacion_class(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
-	elimina_elemento(Relacion, Rels, Rels_New).
-elimina_relacion_class(NomClase,Relacion,[H|T],[H|R]) :- 
-	elimina_relacion_class(NomClase, Relacion, T, R).
-
-%****************************************************************
-% 3b. Eliminar una relación de un objeto
-%****************************************************************
-
-elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
-	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
-	elimina_elemento(Relacion,RelsObjeto,RelsObjeto_New).
-
-%****************************************************************
-% 4a. Modificar nombre de una class
-%****************************************************************
-
-modifica_nombre_class(NomClase,NomClase_New,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase_New,Madre,Props,Rels,Insts)|T]).
-modifica_nombre_class(NomClase,NomClase_New,[H|T],[H|R]) :- 
-	modifica_nombre_class(NomClase, NomClase_New, T, R).
-
-%****************************************************************
-% 4a. Modificar nombre de un objeto
-%****************************************************************
-
-modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
-	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
-	verifica_elemento([id=>NomObjeto|T],Insts),
-	reemplaza_elemento([id=>NomObjeto|T],[id=>NomObjeto_New|T],Insts,Insts_New).
-	
-%****************************************************************
-% Actualizar valor de un elemento en una lista
-%****************************************************************
-
-actualiza_valor(Prop, Valor, [Prop => _|T], [Prop => Valor|T]).
-actualiza_valor(Prop, Valor, [H|T], [H|R]) :- actualiza_valor(Prop, Valor, T,R).
-
-%****************************************************************
-% 4b. Modificar valor de una propiedad de una class
-%****************************************************************
-
-modifica_propiedad_class(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
-	actualiza_valor(Propiedad, Valor, Props, Props_New).
-modifica_propiedad_class(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	modifica_propiedad_class(NomClase, Propiedad, Valor, T, R).
-
-%****************************************************************
-% 4b. Modificar valor de una propiedad de un objeto
-%****************************************************************
-
-modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo) :-
-	elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Aux),
-	agrega_propiedad_objeto(NomObjeto,Propiedad_New,KB_Aux,KB_Nuevo).
-
-%****************************************************************
-% 4c. Modificar con quién mantiene una relación una class
-%****************************************************************
-
-modifica_relacion_class(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
-	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
-modifica_relacion_class(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
-	modifica_relacion_class(NomClase, Propiedad, Valor, T, R).
-	
-%****************************************************************
-% 4c. Modificar con quién mantiene una relación un objeto
-%****************************************************************
-
-modifica_relacion_objeto(NomObjeto,Relacion,Relacion_New,KB_Original,KB_Nuevo) :-
-	elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Aux),
-	agrega_relacion_objeto(NomObjeto,Relacion_New,KB_Aux,KB_Nuevo).
-	
-%****************************************************************
-% Verifica que un elemento sea parte de una lista
-%****************************************************************
-
-verifica_elemento(Elemento,[Elemento|_]).
-verifica_elemento(Elemento,[_|T]):-
-	verifica_elemento(Elemento,T).
-
-%****************************************************************
-% Cambia un elemento A por otro elemento B en una lista
-%****************************************************************
-
-reemplaza_elemento(_,_,[],[]).
-reemplaza_elemento(Elemento_A,Elemento_B,[Elemento_A|T],[Elemento_B|R]):-
-	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
-reemplaza_elemento(Elemento_A,Elemento_B,[H|T],[H|R]):-
-	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
-%--------------------------------------------------------------------------------------------------
-%--------------------------------------------------------------------------------------------------
-%--------------------------------------------------------------------------------------------------
-
-%****************************************************************
-% Verifica que una class exista en la base de conocimiento
-%****************************************************************
-
-%usage open_kb('ruta',KB),verifica_class(class,Resp,KB).
-
-% verifica_class(_,'No sé',[]).
-% verifica_class(NomClase,'No',[class(not(NomClase),_,_,_,_)|_]).
-% verifica_class(NomClase,'Sí',[class(NomClase,_,_,_,_)|_]).
-% verifica_class(NomClase,Resp,[_|T]):-
-% 	verifica_class(NomClase,Resp,T).
-% 
-% extension_class_madre(NomClaseMadre, Exts, Exts_New, KB_Original, [class(NomClase,NomClaseMadre, _, _, Insts)|T]) :- 
-% 	write(NomClase),
-% 	extension_class(NomClase, Exts_A, Exts_B, KB_Original, KB_Original),
-% 	extension_class_madre(NomClaseMadre, Exts_B, Exts_New, KB_Original, T).
-% 
-% extension_class_madre(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_class_madre(NomClase, Exts, Exts_New, KB_Original, T) ; append(Exts, [], Exts_New). 
-% 
-% extension_class(NomClase, Exts, Exts_New, KB_Original, [class(NomClase,_, _, _, Insts)|T]) :- 
-% 	write(NomClase),
-% 	append(Exts, Insts, Exts_A),
-% 	extension_class_madre(NomClase, Exts_A, Exts_New, KB_Original, KB_Original).
-% 
-% extension_class(NomClase, Exts, Exts_New, KB_Original, [_|T]) :- extension_class(NomClase, Exts, Exts_New, KB_Original, T).
-
 %****************************************************************
 % 1a. Extensiones de una class
 %
@@ -541,3 +270,313 @@ er_find_root(_, _, [], _, []).
 
 % empezar desde top
 extension_relacion(Attr, Results, KB_Original) :- er_find_root(top, Attr, Results, KB_Original, KB_Original).
+
+%****************************************************************
+% 2a. Agrega una nueva clase vacia.
+%****************************************************************
+
+agrega_clase(_,_,[],[]).
+agrega_clase(NomClase,Madre,KB_Original,KB_Nuevo) :- append(KB_Original,[class(NomClase,Madre,[],[],[])],KB_Nuevo).
+
+%****************************************************************
+% 2a. Agrega un nuevo objeto a una clase
+%****************************************************************
+
+agrega_objeto_clase(NomClase,NomObjeto,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels,Insts_New)|T]) :- 
+	append(Insts, [[id=>NomObjeto,[],[]]], Insts_New).
+agrega_objeto_clase(NomClase,NomObjeto,[H|T],[H|R]) :- 
+	agrega_objeto_clase(NomClase, NomObjeto, T, R).
+
+%****************************************************************
+% 2b. Agrega una nueva propiedad a una clase
+%****************************************************************
+
+% Usage: open_kb("KB_Original.txt", KB_Original), agrega_propiedad_class(animal, alfa, beta, KB_Original, KB_Nuevo).
+
+% modificar elemento concordante, este forma la basis del abajo
+% foo([alfa|T], [beta|T]).
+% foo([H|T], [H|R]) :- foo(T,R).
+
+% Propiedad debe estar en formato de atomo, atributo => valor, o not(atributo => valor)
+
+agrega_propiedad_clase(_,_,[],[]).
+agrega_propiedad_clase(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	append(Props, [Propiedad], Props_New).
+agrega_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
+	agrega_propiedad_clase(NomClase, Propiedad, T, R).
+
+%****************************************************************
+% 2b. Agrega una nueva propiedad a un objeto 
+%****************************************************************
+
+agrega_propiedad_objeto(_,_,[],[]).
+agrega_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
+	append(PropsObjeto,[Propiedad],PropsObjeto_New).
+
+%****************************************************************
+% 2c. Agrega una nueva relacion a una clase
+%****************************************************************
+
+% Relacion debe estar en formato de atom, atributo => valor, o not(atributo => valor)
+
+agrega_relacion_clase(_,_,[],[]).
+agrega_relacion_clase(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	append(Rels, [Relacion], Rels_New).
+agrega_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
+	agrega_relacion_clase(NomClase, Relacion, T, R).
+
+%****************************************************************
+% 2c. Agrega una nueva relacion a un objeto
+%****************************************************************
+
+agrega_relacion_objeto(_,_,[],[]).
+agrega_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
+	append(RelsObjeto,[Relacion],RelsObjeto_New).
+
+%****************************************************************
+% 3a. Eliminar una clase
+%****************************************************************
+
+elimina_clase(NomClase,KB_Original,KB_Nuevo) :- elimina_elemento(class(NomClase,Madre,_,_,_),KB_Original,KB_Aux),
+	actualiza_clase_madre(NomClase,Madre,KB_Aux,KB_Aux1),
+	elimina_toda_relacion(NomClase,KB_Aux1,KB_Nuevo).
+
+%****************************************************************
+% 3a. Eliminar un objeto
+%****************************************************************
+
+elimina_objeto(NomObjeto,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Aux1),
+	verifica_elemento([id=>NomObjeto,_,_],Insts),
+	elimina_elemento([id=>NomObjeto,_,_],Insts,Insts_New),
+	elimina_toda_relacion(NomObjeto,KB_Aux1,KB_Nuevo).
+	
+%****************************************************************
+% 3b. Eliminar una propiedad de una clase
+%****************************************************************
+
+elimina_propiedad_clase(NomClase,Propiedad,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	elimina_elemento(Propiedad, Props, Props_New).
+elimina_propiedad_clase(NomClase,Propiedad,[H|T],[H|R]) :- 
+	elimina_propiedad_clase(NomClase, Propiedad, T, R).
+
+%****************************************************************
+% 3b. Eliminar una propiedad de un objeto
+%****************************************************************
+
+elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto_New,RelsObjeto],Insts,Insts_New),
+	elimina_elemento(Propiedad,PropsObjeto,PropsObjeto_New).
+
+%****************************************************************
+% 3c. Eliminar una relacion de una clase
+%****************************************************************
+
+elimina_relacion_clase(NomClase,Relacion,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	elimina_elemento(Relacion, Rels, Rels_New).
+elimina_relacion_clase(NomClase,Relacion,[H|T],[H|R]) :- 
+	elimina_relacion_clase(NomClase, Relacion, T, R).
+
+%****************************************************************
+% 3c. Eliminar una relación de un objeto
+%****************************************************************
+
+elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Nuevo),
+	verifica_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],Insts),
+	reemplaza_elemento([id=>NomObjeto,PropsObjeto,RelsObjeto],[id=>NomObjeto,PropsObjeto,RelsObjeto_New],Insts,Insts_New),
+	elimina_elemento(Relacion,RelsObjeto,RelsObjeto_New).
+
+%****************************************************************
+% 4a. Modificar nombre de una clase
+%****************************************************************
+
+modifica_nombre_clase(_,_,[],[]).
+modifica_nombre_clase(NomClase,NomClase_New,KB_Original,KB_Nuevo):-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase_New,Madre,Props,Rels,Insts),KB_Original,KB_Aux),
+	actualiza_clase_madre(NomClase,NomClase_New,KB_Aux,KB_Aux1),
+	actualiza_toda_relacion(NomClase,NomClase_New,KB_Aux1,KB_Nuevo).
+
+%****************************************************************
+% 4a. Modificar nombre de un objeto
+%****************************************************************
+
+modifica_nombre_objeto(NomObjeto,NomObjeto_New,KB_Original,KB_Nuevo) :-
+	reemplaza_elemento(class(NomClase,Madre,Props,Rels,Insts),class(NomClase,Madre,Props,Rels,Insts_New),KB_Original,KB_Aux),
+	verifica_elemento([id=>NomObjeto|T],Insts),
+	reemplaza_elemento([id=>NomObjeto|T],[id=>NomObjeto_New|T],Insts,Insts_New),
+	actualiza_toda_relacion(NomObjeto,NomObjeto_New,KB_Aux,KB_Nuevo).
+
+%****************************************************************
+% 4b. Modificar valor de una propiedad de una clase
+%****************************************************************
+
+modifica_propiedad_clase(_,_,_,[],[]).
+modifica_propiedad_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props_New,Rels,Insts)|T]) :- 
+	actualiza_valor(Propiedad, Valor, Props, Props_New).
+modifica_propiedad_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	modifica_propiedad_clase(NomClase, Propiedad, Valor, T, R).
+
+%****************************************************************
+% 4b. Modificar la propiedad de un objeto
+%****************************************************************
+
+modifica_propiedad_objeto(_,_,[],[]).
+modifica_propiedad_objeto(NomObjeto,Propiedad,Propiedad_New,KB_Original,KB_Nuevo) :-
+	elimina_propiedad_objeto(NomObjeto,Propiedad,KB_Original,KB_Aux),
+	agrega_propiedad_objeto(NomObjeto,Propiedad_New,KB_Aux,KB_Nuevo).
+
+%****************************************************************
+% 4c. Modificar el valor de una relacion para una clase
+%****************************************************************
+
+modifica_relacion_clase(_,_,_,[],[]).
+modifica_relacion_clase(NomClase,Propiedad,Valor,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts)|T]) :- 
+	actualiza_valor(Propiedad, Valor, Rels, Rels_New).
+modifica_relacion_clase(NomClase,Propiedad,Valor,[H|T],[H|R]) :- 
+	modifica_relacion_clase(NomClase, Propiedad, Valor, T, R).
+	
+%****************************************************************
+% 4c. Modificar la relación de un objeto
+%****************************************************************
+
+modifica_relacion_objeto(_,_,[],[]).
+modifica_relacion_objeto(NomObjeto,Relacion,Relacion_New,KB_Original,KB_Nuevo) :-
+	elimina_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Aux),
+	agrega_relacion_objeto(NomObjeto,Relacion_New,KB_Aux,KB_Nuevo).
+	
+%****************************************************************
+% Verifica que un elemento sea parte de una lista
+%****************************************************************
+
+verifica_elemento(Elemento,[Elemento|_]).
+verifica_elemento(Elemento,[_|T]):-
+	verifica_elemento(Elemento,T).
+
+%****************************************************************
+% Cambia un elemento A por otro elemento B en una lista
+%****************************************************************
+
+reemplaza_elemento(_,_,[],[]).
+reemplaza_elemento(Elemento_A,Elemento_B,[Elemento_A|T],[Elemento_B|R]):-
+	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
+reemplaza_elemento(Elemento_A,Elemento_B,[H|T],[H|R]):-
+	reemplaza_elemento(Elemento_A,Elemento_B,T,R).
+
+%****************************************************************
+% Actualizar valor de un elemento en una lista
+%****************************************************************
+
+actualiza_valor(Prop, Valor, [Prop => _|T], [Prop => Valor|T]).
+actualiza_valor(Prop, Valor, [H|T], [H|R]) :- actualiza_valor(Prop, Valor, T,R).
+
+%****************************************************************
+% Eliminar un elemento de una lista
+%****************************************************************
+
+elimina_elemento(Elemento, [Elemento|T], T).
+elimina_elemento(Elemento, [H|T], [H|R]) :- elimina_elemento(Elemento, T,R).
+
+%****************************************************************
+% Actualiza la madre de de las clases hijas
+%****************************************************************
+
+actualiza_clase_madre(_,_,[],[]).
+actualiza_clase_madre(NomClaseMadre_Actual,NomClaseMadre_New,[class(NomClase,NomClaseMadre_Actual,Props,Rels,Insts)|T],[class(NomClase,NomClaseMadre_New,Props,Rels,Insts)|R]):-
+	actualiza_clase_madre(NomClaseMadre_Actual,NomClaseMadre_New,T,R).
+actualiza_clase_madre(NomClaseMadre_Actual,NomClaseMadre_New,[H|T],[H|R]):-
+	actualiza_clase_madre(NomClaseMadre_Actual,NomClaseMadre_New,T,R).
+
+%****************************************************************
+% Elimina todo tipo de relacion entre clases y objetos
+%****************************************************************
+
+elimina_toda_relacion(_,[],[]).
+elimina_toda_relacion(Elemento,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts_New)|R]):-
+	elimina_relacion(Elemento,Rels,Rels_New),
+	elimina_relaciones_de_objetos(Elemento,Insts,Insts_New),
+	elimina_toda_relacion(Elemento,T,R).
+
+elimina_relaciones_de_objetos(_,[],[]).
+elimina_relaciones_de_objetos(Elemento,[[id=>Objeto,PropsObjeto,RelsObjeto]|T],[[id=>Objeto,PropsObjeto,RelsObjeto_New]|R]):-
+	elimina_relacion(Elemento,RelsObjeto,RelsObjeto_New),
+	elimina_relaciones_de_objetos(Elemento,T,R).
+
+elimina_relacion(_,[],[]).
+elimina_relacion(Elemento,[_=>Elemento|T],R):-
+	elimina_relacion(Elemento,T,R).
+elimina_relacion(Elemento,[not(_=>Elemento)|T],R):-
+	elimina_relacion(Elemento,T,R).
+elimina_relacion(Elemento,[H|T],[H|R]):-
+	elimina_relacion(Elemento,T,R).
+	
+%****************************************************************
+% Actualiza todo tipo de relacion entre clases y objetos
+%****************************************************************
+
+actualiza_toda_relacion(_,_,[],[]).
+actualiza_toda_relacion(Elemento,Elemento_Nuevo,[class(NomClase,Madre,Props,Rels,Insts)|T],[class(NomClase,Madre,Props,Rels_New,Insts_New)|R]):-
+	actualiza_relacion(Elemento,Elemento_Nuevo,Rels,Rels_New),
+	actualiza_relaciones_de_objetos(Elemento,Elemento_Nuevo,Insts,Insts_New),
+	actualiza_toda_relacion(Elemento,Elemento_Nuevo,T,R).
+	
+actualiza_relaciones_de_objetos(_,_,[],[]).
+actualiza_relaciones_de_objetos(Elemento,Elemento_Nuevo,[[id=>NomObjeto,PropsObjeto,RelsObjeto]|T],[[id=>NomObjeto,PropsObjeto,RelsObjeto_New]|R]):-
+	actualiza_relacion(Elemento,Elemento_Nuevo,RelsObjeto,RelsObjeto_New),
+	actualiza_relaciones_de_objetos(Elemento,Elemento_Nuevo,T,R).
+
+actualiza_relacion(_,_,[],[]).
+actualiza_relacion(Valor,Valor_Nuevo,[Atributo=>Valor|T],[Atributo=>Valor_Nuevo|R]):-
+	actualiza_relacion(Valor,Valor_Nuevo,T,R).
+actualiza_relacion(Valor,Valor_Nuevo,[not(Atributo=>Valor)|T],[not(Atributo=>Valor_Nuevo)|R]):-
+	actualiza_relacion(Valor,Valor_Nuevo,T,R).
+actualiza_relacion(Valor,Valor_Nuevo,[H|T],[H|R]):-
+	actualiza_relacion(Valor,Valor_Nuevo,T,R).
+	
+%****************************************************************
+% Carga y lectura de la base de conocimiento
+%****************************************************************
+
+%KB open and save
+
+open_kb(Route,KB):-
+	open(Route,read,Stream),
+	readclauses(Stream,X),
+	close(Stream),
+	atom_to_term(X,KB).
+
+save_kb(Route,KB):-
+	open(Route,write,Stream),
+	writeq(Stream,KB),
+	close(Stream).
+
+readclauses(InStream,W) :-
+        get0(InStream,Char),
+        checkCharAndReadRest(Char,Chars,InStream),
+	atom_chars(W,Chars).
+
+checkCharAndReadRest(-1,[],_) :- !.  % End of Stream	
+checkCharAndReadRest(end_of_file,[],_) :- !.
+
+checkCharAndReadRest(Char,[Char|Chars],InStream) :-
+        get0(InStream,NextChar),
+        checkCharAndReadRest(NextChar,Chars,InStream).
+
+%compile an atom string of characters as a prolog term
+atom_to_term(ATOM, TERM) :-
+	atom(ATOM),
+	atom_to_chars(ATOM,STR),
+	atom_to_chars('.',PTO),
+	append(STR,PTO,STR_PTO),
+	read_from_chars(STR_PTO,TERM).
+
+:- op(800,xfx,'=>').
+

@@ -1,4 +1,5 @@
 [
+	class(top,none,[],[],[]),
 	class(animal,top,[],[],[]),
 	class(mammal,animal,[has_legs=>yes,can_fly=>no],[],[]),
 	class(mouse, mammal, [], [], [
