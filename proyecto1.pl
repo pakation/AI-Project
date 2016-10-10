@@ -83,6 +83,8 @@ get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 %  Insts		Lista de objectos ya en la nueva forma, pasa [] al inicio
 %  Insts_new	Lista de objectos de devolver
 package(Attr, Value, [[id => Name,props => Props,_]| T], Insts, Insts_New) :-
+	package(Attr, Value, [[id => Name,Props,_]| T], Insts, Insts_New).
+package(Attr, Value, [[id => Name,Props,_]| T], Insts, Insts_New) :-
 	get_value(Attr => ValueNew, Props), % buscar para propiedad
 	append(Insts, [Name:ValueNew], Insts_Tmp), % existe, sobreescribir default
 	package(Attr, Value, T, Insts_Tmp, Insts_New) % empacar
@@ -122,6 +124,8 @@ ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr,
 ep_madre(_, _, _, [], _, []).
 
 ep_objecto(Attr, [[id=>Name,props => Props,_]|T], [Name:Value]) :-
+	ep_objecto(Attr, [[id=>Name,Props,_]|T], [Name:Value]).
+ep_objecto(Attr, [[id=>Name,Props,_]|T], [Name:Value]) :-
 	get_value(Attr => Value, Props) % buscar para propiedad
 	; ep_objecto(Attr, T, [Name:Value]).
 ep_objecto(_, [], []).
@@ -183,7 +187,9 @@ extension_or_object(NomClase, Insts, KB_Original) :-
 %  Subjs		Lista de sujectos de la relación
 %  Results_New	Lista formatado como [ name :[ ... ] ]
 %  KB_Original	Knowledge base
-package_relation(Attr, [[id=>Name,_,rels=>Rels]|T], Subjs, Results, Results_New, KB_Original) :-
+package_relation(Attr, [[id=>Name,_,rels => Rels]|T], Subjs, Results, Results_New, KB_Original) :-
+	package_relation(Attr, [[id=>Name,_,Rels]|T], Subjs, Results, Results_New, KB_Original).
+package_relation(Attr, [[id=>Name,_,Rels]|T], Subjs, Results, Results_New, KB_Original) :-
 	get_value(Attr => Value, Rels), % buscar si objecto especifica una relación
 	extension_or_object(Value, SubjsNew, KB_Original),
 	append(Results, [Name:SubjsNew], Results_A),
@@ -236,6 +242,8 @@ not_empty([_|_]).
 %  ...				Formato para regresar
 %  KB_Original		Knowledge base
 er_objecto(Attr, [[id=>Name,_,rels => Rels]|T], [Name:Subjs], KB_Original) :-
+	er_objecto(Attr, [[id=>Name,_,Rels]|T], [Name:Subjs], KB_Original).
+er_objecto(Attr, [[id=>Name,_,Rels]|T], [Name:Subjs], KB_Original) :-
 	get_value(Attr => Value, Rels), % buscar para relacion
 	extension_or_object(Value, Subjs, KB_Original) % tiene la relación
 	; er_objecto(Attr, T, [Name:Subjs], KB_Original). % no tiene la relación
@@ -263,7 +271,7 @@ er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 	; 
 	% si no tiene la propiedad definido, todavía una de sus objectos puede
 	% tenerlo. así que busar entre sus objectos
-	er_objecto(Attr, Insts, Results_A, KB_Original),
+	ignore(er_objecto(Attr, Insts, Results_A, KB_Original)),
 	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C),
