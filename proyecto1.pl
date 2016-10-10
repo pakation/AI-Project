@@ -603,7 +603,7 @@ nombre_de_objetos([],[]).
 nombre_de_objetos([[id=>NomObjeto,_,_]|T],Insts_Lista):-
 	nombre_de_objetos(T,Lista),append([NomObjeto],Lista,Insts_Lista).
 
-elimina_lista_objetos(_,[],[]).
+elimina_lista_objetos([],KB_Original,KB_Original).
 elimina_lista_objetos([NomObjeto|C],KB_Original,KB_Nuevo) :-
 	elimina_lista_objetos(C,KB_Original,KB_Aux),elimina_toda_relacion(NomObjeto,KB_Aux,KB_Nuevo).
 elimina_lista_objetos([NomObjeto|_],KB_Original,KB_Nuevo) :-
