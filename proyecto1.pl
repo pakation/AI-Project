@@ -162,12 +162,15 @@ ep_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomCl
 ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, [_|T]) :- ep_madre(Attr, Value, NomClaseMadre, Exts, KB_Original, T).
 ep_madre(_, _, _, [], _, []).
 
-ep_objecto(Attr, [[id=>Name,props => Props,_]|T], [Name:Value]) :-
-	ep_objecto(Attr, [[id=>Name,Props,_]|T], [Name:Value]).
-ep_objecto(Attr, [[id=>Name,Props,_]|T], [Name:Value]) :-
-	get_value(Attr => Value, Props) % buscar para propiedad
-	; ep_objecto(Attr, T, [Name:Value]).
-ep_objecto(_, [], []).
+ep_objecto(Attr, [[id=>Name,props => Props,_]|T], Results, Results_New) :-
+	ep_objecto(Attr, [[id=>Name,Props,_]|T], Results, Results_New).
+ep_objecto(Attr, [[id=>Name,Props,_]|T], Results, Results_New) :-
+	get_value(Attr => Value, Props), % buscar para propiedad
+	append(Results, [Name:Value], Results_A),
+	ep_objecto(Attr, T, Results_A, Results_New) % seguir buscando por más que tiene la relación
+	; 
+	ep_objecto(Attr, T, Results, Results_New).
+ep_objecto(_, [], Results, Results).
 
 % Buscar desde el inicio del árbol para las clases más arribas que tienen
 %  el attributo dado especificado
@@ -188,7 +191,7 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 	append(Results_C, Results_D, Results)
 	; 
 	% uno de los objectos puede tener la propiedad
-	ep_objecto(Attr, Insts_A, Results_A),
+	ep_objecto(Attr, Insts_A, [], Results_A),
 	% si la propiedad no fue encontrado, seguir buscando lateralmente
 	ep_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T),
 	append(Results_A, Results_B, Results_C),
@@ -280,13 +283,16 @@ not_empty([_|_]).
 %  ...				Lista de objectos para buscar
 %  ...				Formato para regresar
 %  KB_Original		Knowledge base
-er_objecto(Attr, [[id=>Name,_,rels => Rels]|T], [Name:Subjs], KB_Original) :-
-	er_objecto(Attr, [[id=>Name,_,Rels]|T], [Name:Subjs], KB_Original).
-er_objecto(Attr, [[id=>Name,_,Rels]|T], [Name:Subjs], KB_Original) :-
+er_objecto(Attr, [[id=>Name,_,rels => Rels]|T], Results, Results_New, KB_Original) :-
+	er_objecto(Attr, [[id=>Name,_,Rels]|T], Results, Results_New, KB_Original).
+er_objecto(Attr, [[id=>Name,_,Rels]|T], Results, Results_New, KB_Original) :-
 	get_value(Attr => Value, Rels), % buscar para relacion
-	extension_or_object(Value, Subjs, KB_Original) % tiene la relación
-	; er_objecto(Attr, T, [Name:Subjs], KB_Original). % no tiene la relación
-er_objecto(_, [], [],_).
+	extension_or_object(Value, Subjs, KB_Original), % tiene la relación
+	append(Results, [Name:Subjs], Results_A),
+	er_objecto(Attr, T, Results_A, Results_New, KB_Original) % seguir buscando por más que tiene la relación
+	; 
+	er_objecto(Attr, T, Results, Results_New, KB_Original). % no tiene la relación
+er_objecto(_, [], Results, Results, _).
 
 % Buscar desde el inicio del árbol para las clases más arribas que tienen
 %  la relación dado especificado
@@ -310,7 +316,7 @@ er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 	; 
 	% si no tiene la propiedad definido, todavía una de sus objectos puede
 	% tenerlo. así que busar entre sus objectos
-	ignore(er_objecto(Attr, Insts, Results_A, KB_Original)),
+	ignore(er_objecto(Attr, Insts, [], Results_A, KB_Original)),
 	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
 	append(Results_A, Results_B, Results_C),
