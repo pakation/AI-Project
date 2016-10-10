@@ -345,7 +345,9 @@ agrega_relacion_objeto(NomObjeto,Relacion,KB_Original,KB_Nuevo) :-
 
 elimina_clase(NomClase,KB_Original,KB_Nuevo) :- elimina_elemento(class(NomClase,Madre,_,_,_),KB_Original,KB_Aux),
 	actualiza_clase_madre(NomClase,Madre,KB_Aux,KB_Aux1),
-	elimina_toda_relacion(NomClase,KB_Aux1,KB_Nuevo).
+	elimina_toda_relacion(NomClase,KB_Aux1,KB_Aux2),
+	lista_de_objetos(NomClase,KB_Original,Lista),
+	elimina_lista_objetos(Lista,KB_Aux2,KB_Nuevo).
 
 %****************************************************************
 % 3a. Eliminar un objeto
@@ -533,6 +535,26 @@ actualiza_relacion(Valor,Valor_Nuevo,[not(Atributo=>Valor)|T],[not(Atributo=>Val
 	actualiza_relacion(Valor,Valor_Nuevo,T,R).
 actualiza_relacion(Valor,Valor_Nuevo,[H|T],[H|R]):-
 	actualiza_relacion(Valor,Valor_Nuevo,T,R).
+
+%****************************************************************
+% Elimina las relaciones de una lista de objetos
+%****************************************************************
+
+lista_de_objetos(_,[],[]).
+lista_de_objetos(NomClase,[class(NomClase,_,_,_,Insts)|_],Insts_Lista):-
+	nombre_de_objetos(Insts,Insts_Lista).
+lista_de_objetos(NomClase,[_|T],Insts_Lista):-
+	lista_de_objetos(NomClase,T,Insts_Lista).
+	
+nombre_de_objetos([],[]).
+nombre_de_objetos([[id=>NomObjeto,_,_]|T],Insts_Lista):-
+	nombre_de_objetos(T,Lista),append([NomObjeto],Lista,Insts_Lista).
+
+elimina_lista_objetos(_,[],[]).
+elimina_lista_objetos([NomObjeto|C],KB_Original,KB_Nuevo) :-
+	elimina_lista_objetos(C,KB_Original,KB_Aux),elimina_toda_relacion(NomObjeto,KB_Aux,KB_Nuevo).
+elimina_lista_objetos([NomObjeto|_],KB_Original,KB_Nuevo) :-
+	elimina_toda_relacion(NomObjeto,KB_Original,KB_Nuevo).
 	
 %****************************************************************
 % Carga y lectura de la base de conocimiento
