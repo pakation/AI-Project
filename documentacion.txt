@@ -1,0 +1,40 @@
+
+Nombre: extension_class(...)
+
+Descripción: Buscar todas las extensiones de una clase
+
+Argumentos:
+Attr: Nombre de la clase
+Results: Lista de extensiones por identificador
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+extension_class(animal, Results, KB).
+
+-----------------------
+
+Nombre: extension_propiedad(...)
+
+Descripción: Buscar todas las extensiones de una propiedad
+
+Argumentos:
+Attr: Nombre de la propiedad que quiere buscar
+Results: Lista de extensiones, junto con el valor que tiene cada objecto bajo las reglas de especifidad
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+extension_class(can_fly, Results, KB).
+
+-----------------------
+
+Nombre: extension_relacion(...)
+
+Descripción: Buscar todas las extensiones de un relación
+
+Argumentos:
+Attr: Nombre de la propiedad que quiere buscar
+Results: Lista de extensiones, junto con los relaciones que tiene cada objecto bajo las reglas de especifidad
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+extension_class(hate, Results, KB).
