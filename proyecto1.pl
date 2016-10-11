@@ -325,7 +325,6 @@ er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 	get_value_strict(Attr => Value, Rels), % buscar para propiedad
 	extension_or_object(Value, Subjs, KB_Original),
 	% formatar la relación
-	write(Insts),
 	package_relation(Attr, Insts, Subjs, [], Results_A, KB_Original),
 	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
