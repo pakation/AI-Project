@@ -1,0 +1,7 @@
+[
+class(top,none,[],[],[]),
+class(alfa,top,[can_fly],[],[[id=>ialfa,[],[]]]),
+class(beta,top,[not(can_fly)],[],[[id=>ibeta,[],[]]]),
+class(gama,top,[can_fly=>yes],[],[[id=>igama,[],[]]]),
+class(delt,top,[can_fly=>no],[],[[id=>idelt,[],[]]])
+]

@@ -109,10 +109,14 @@ extension_class(NomClase, Ids, KB_Original) :-
 
 % Recuperar un valor de una lista de propiedades, dado un attributo.
 %  Evalua a falso si el valor no existe.
+get_value(not(Attr) => yes, [not(Attr)|_]). % not(...) corresponde exclusivamente con not(...) cuando buscando
+get_value(not(Attr) => no, [Attr =>_|_]).
+get_value(not(Attr) => no, [Attr|_]).
+
 get_value(Attr => Value, [Attr => Value|_]).
-get_value(Attr => yes, [Attr|_]).
-get_value(Attr => no, [not(Attr)|_]).
-get_value(Attr => not(Value), [not(Attr => Value)|_]).
+get_value(Attr => yes, [Attr|_]). % traducir attr a attr => yes
+get_value(Attr => no, [not(Attr)|_]). % traducir not(attr) a attr => no
+%get_value(Attr => not(Value), [not(Attr => Value)|_]).
 get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 
 % Empacar una lista de objectos a la forma "id:valor"
@@ -203,10 +207,17 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
+select_yes([Attr:yes|T], [Attr:yes|R]) :- select_yes(T, R).
+select_yes([_|T], R) :- select_yes(T,R).
+select_yes([], []).
+
 % sobreescribir todos los valores para que sean yes
 %overwrite([Attr : _|T], [Attr : yes|R]) :- overwrite(T, R).
 %overwrite([], []).
 
+extension_propiedad(not(Attr), Results, KB_Original) :- 
+	ep_find_root(top, not(Attr), Results_A, KB_Original, KB_Original),
+	select_yes(Results_A, Results).
 extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
 
 %****************************************************************
