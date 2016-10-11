@@ -38,3 +38,74 @@ KB_Original: Knowledge Base para buscar
 
 Ejemplo de uso:
 extension_class(hate, Results, KB).
+
+----------------------
+
+Nombre: class_inst(...)
+
+Descripción: Busca todas las clases de un(a) objeto/instancia
+
+Argumentos: 
+Id: Identificador del(a) objeto/instancia a buscar
+Clases_Inst: Lista de las clases a las que pertenece la instancia
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+
+class_inst(monstro, Clases_Inst, KnowledgeBase)
+
+--------------------------
+
+Nombre: props_inst(...)
+
+Descripción: Busca todas las propiedades de un(a) objeto/instancia que tiene bajo las reglas de especificidad
+
+Argumentos: 
+Id: Identificador del(a) objeto/instancia a buscar
+Props_Inst: Lista de las propiedades del(a) objeto/instancia
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+
+props_inst(monstro, Props_Inst, KnowledgeBase)
+
+---------------------------
+
+Nombre: props_class(...)
+
+Descripción: Busca todas las propiedades de una clase que tiene bajo las reglas de especificidad
+
+Argumentos: 
+NomClase: Identificador de la clase a buscar
+Props_Class: Lista de las propiedades de la clase
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+
+props_class(human, Props_Class, KnowledgeBase)
+
+---------------------------
+
+Nombre: rels_inst(Id, Rels_Inst, KnowledgeBase)
+
+Argumentos:
+Id: Identificador del(a) objeto/instancia a buscar
+Rels_Inst: Lista de las propiedades del(a) objeto/instancia
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+
+rels_inst(monstro, Rels_Inst, KnowledgeBase)
+
+----------------------------
+
+Nombre: rels_class(NomClase, Rels_Class, KnowledgeBase)
+
+Argumentos:
+NomClase: Identificador del(a) objeto/instancia a buscar
+Rels_Class: Lista de las propiedades del(a) objeto/instancia
+KB_Original: Knowledge Base para buscar
+
+Ejemplo de uso:
+
+rels_inst(human, Rels_Class, KnowledgeBase)

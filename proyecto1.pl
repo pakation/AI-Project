@@ -440,7 +440,7 @@ props_inst(Id, Props_Inst, KB_Original) :-
 %****************************************************************
 % 1e2. Todas las propiedades de una clase.
 %
-% Usage: props_class(Id, Props_Inst, KnowledgeBase)
+% Usage: props_class(NomClase, Props_Class, KnowledgeBase)
 %****************************************************************
 
 epc(NomClase, _, [class(NomClase,top,Props,_,_)|_], Props_Base, Props_Insts):-
@@ -455,13 +455,13 @@ epc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,Props,_,_)|_], Props_Ba
 epc(NomClase, KB_Original, [_|T], Props_Base, Props_Insts):- 
 	epc(NomClase, KB_Original, T, Props_Base, Props_Insts).
 
-props_class(NomClase, Props_Inst, KB_Original) :- 	
-	(epc(NomClase, KB_Original, KB_Original, [], Props_Inst)) ; Props_Inst = unknown.
+props_class(NomClase, Props_Class, KB_Original) :- 	
+	(epc(NomClase, KB_Original, KB_Original, [], Props_Class)) ; Props_Class = unknown.
 
 %****************************************************************
 % 1f1. Todas las relaciones de un objeto/instancia.
 %
-% Usage: rels_inst(Id, Props_Inst, KnowledgeBase)
+% Usage: rels_inst(Id, Rels_Inst, KnowledgeBase)
 %****************************************************************
 
 %Buscar objeto/instancia que coincida con el id
@@ -492,23 +492,23 @@ rels_inst(Id, Rels_Inst, KB_Original) :-
 %****************************************************************
 % 1f2. Todas las relaciones de una clase.
 %
-% Usage: rels_class(Id, Rels_Class, KnowledgeBase)
+% Usage: rels_class(NomClase, Rels_Class, KnowledgeBase)
 %****************************************************************
 
-erc(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Insts):-
-	merge_safe(Rels,Rels_Base,Rels_Insts).
+erc(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Class):-
+	merge_safe(Rels,Rels_Base,Rels_Class).
 
 %Encontró la clase madre y mete sus relaciones a la lista.
-erc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Insts):-
+erc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Class):-
 	merge_safe(Rels,Rels_Base,Rels_Raw), 
-	erc(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Insts).
+	erc(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Class).
 
 %Seguir buscando la clase madre.
-erc(NomClase, KB_Original, [_|T], Rels_Base, Rels_Insts):- 
-	erc(NomClase, KB_Original, T, Rels_Base, Rels_Insts).
+erc(NomClase, KB_Original, [_|T], Rels_Base, Rels_Class):- 
+	erc(NomClase, KB_Original, T, Rels_Base, Rels_Class).
 
-rels_class(NomClase, Rels_Insts, KB_Original) :- 	
-	(erc(NomClase, KB_Original, KB_Original, [], Rels_Insts)) ; Rels_Insts = unknown.
+rels_class(NomClase, Rels_Class, KB_Original) :- 	
+	(erc(NomClase, KB_Original, KB_Original, [], Rels_Class)) ; Rels_Class = unknown.
 
 %****************************************************************
 % 2a. Agrega una nueva clase vacia.
