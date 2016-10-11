@@ -117,7 +117,7 @@ get_value(not(Attr) => no, [Attr|_]).
 get_value(Attr => Value, [Attr => Value|_]).
 get_value(Attr => yes, [Attr|_]). % traducir attr a attr => yes
 get_value(Attr => no, [not(Attr)|_]). % traducir not(attr) a attr => no
-%get_value(Attr => not(Value), [not(Attr => Value)|_]).
+get_value(Attr => not(Value), [not(Attr => Value)|_]).
 get_value(Elemento, [_|T]) :- get_value(Elemento, T).
 
 % Empacar una lista de objectos a la forma "id:valor"
