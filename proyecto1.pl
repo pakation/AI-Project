@@ -350,6 +350,145 @@ er_find_root(_, _, [], _, []).
 extension_relacion(Attr, Results, KB_Original) :- er_find_root(top, Attr, Results, KB_Original, KB_Original).
 
 %****************************************************************
+% 1d. Todas las clases a las que pertenece un objeto/instancia.
+%
+% Usage: class_inst(Id, Clases_Inst, KnowledgeBase)
+%****************************************************************
+
+%Buscar objeto/instancia que coincide con el id
+
+%Encontró objeto/instancia que coincide con el id.
+eo(Id, NomClase, [class(NomClase,_,_,_,[[_=>Id,_,_]|_])|_]).
+
+%Buscar en el siguiente objeto/instancia de la misma clase.
+eo(Id, NomClase, [class(NomClase,NomClaseMadre,_,_,[_|T])|T1]):-
+	eo(Id, NomClase, [class(NomClase,NomClaseMadre,_,_,T)|T1]).
+
+%Seguir buscando en las demás clases.
+eo(Id, NomClase, [_|T]):- 
+	eo(Id, NomClase, T).
+
+%Encontró la clase madre y la mete a la lista.
+ec_objeto(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,_,_)|_], Clases_Base, Clases_Insts):-
+	append(Clases_Base,[NomClase],Clases_Raw),
+	ec_objeto(NomClaseMadre, KB_Original, KB_Original, Clases_Raw, Clases_Insts).
+
+%Seguir buscando la clase.
+ec_objeto(NomClase, KB_Original, [_|T], Clases_Base, Clases_Insts):- 
+	ec_objeto(NomClase, KB_Original, T, Clases_Base, Clases_Insts).
+
+%Llegó a la clase top, caso base. 
+ec_objeto(top,_,_,Clases_Raw,Clases_Insts):-
+	append(Clases_Raw,[top],Clases_Insts).
+
+class_inst(Id, Clases_Inst, KB_Original) :- 
+	eo(Id, NomClase, KB_Original), ec_objeto(NomClase, KB_Original, KB_Original, [], Clases_Inst).
+
+%****************************************************************
+% 1e1. Todas las propiedades de un objeto/instancia.
+%
+% Usage: props_inst(Id, Props_Inst, KnowledgeBase)
+%****************************************************************
+
+%Buscar objeto/instancia que coincida con el id
+eop(Id, Props_Inst, NomClase, [class(NomClase,_,_,_,[[id=>Id,Props_Inst,_]|_])|_]).
+
+eop(Id, Props_Inst, NomClase, [class(NomClase,_,_,_,[_|T])|T1]):-
+	eop(Id, Props_Inst, NomClase, [class(NomClase,_,_,_,T)|T1]).
+
+%Seguir buscando si no coincide
+eop(Id, Props_Inst, NomClase, [_|T]):-
+	eop(Id, Props_Inst, NomClase, T).
+
+ec_objetoP(NomClase, _, [class(NomClase,top,Props,_,_)|_], Props_Base, Props_Insts):-
+	append(Props_Base,Props,Props_Insts).
+
+%Encontró la clase madre y mete sus propiedades a la lista.
+ec_objetoP(NomClase, KB_Original, [class(NomClase,NomClaseMadre,Props,_,_)|_], Props_Base, Props_Insts):-
+	append(Props_Base,Props,Props_Raw),
+	ec_objetoP(NomClaseMadre, KB_Original, KB_Original, Props_Raw, Props_Insts).
+
+%Seguir buscando la clase madre.
+ec_objetoP(NomClase, KB_Original, [_|T], Props_Base, Props_Insts):- 
+	ec_objetoP(NomClase, KB_Original, T, Props_Base, Props_Insts).
+
+props_inst(Id, Props_Inst, KB_Original) :- 	
+	eop(Id, Props_Base, NomClase, KB_Original), ec_objetoP(NomClase, KB_Original, KB_Original, Props_Base, Props_Inst).
+
+%****************************************************************
+% 1e2. Todas las propiedades de una clase.
+%
+% Usage: props_class(Id, Props_Inst, KnowledgeBase)
+%****************************************************************
+
+epc(NomClase, _, [class(NomClase,top,Props,_,_)|_], Props_Base, Props_Insts):-
+	append(Props_Base,Props,Props_Insts).
+
+%Encontró la clase madre y mete sus propiedades a la lista.
+epc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,Props,_,_)|_], Props_Base, Props_Insts):-
+	append(Props_Base,Props,Props_Raw), 
+	epc(NomClaseMadre, KB_Original, KB_Original, Props_Raw, Props_Insts).
+
+%Seguir buscando la clase madre.
+epc(NomClase, KB_Original, [_|T], Props_Base, Props_Insts):- 
+	epc(NomClase, KB_Original, T, Props_Base, Props_Insts).
+
+props_class(NomClase, Props_Inst, KB_Original) :- 	
+	epc(NomClase, KB_Original, KB_Original, [], Props_Inst).
+
+%****************************************************************
+% 1f1. Todas las relaciones de un objeto/instancia.
+%
+% Usage: rels_inst(Id, Props_Inst, KnowledgeBase)
+%****************************************************************
+
+%Buscar objeto/instancia que coincida con el id
+eor(Id, Rels_Inst, NomClase, [class(NomClase,_,_,_,[[id=>Id,_,Rels_Inst]|_])|_]).
+
+eor(Id, Rels_Inst, NomClase, [class(NomClase,_,_,_,[_|T])|T1]):-
+	eor(Id, Rels_Inst, NomClase, [class(NomClase,_,_,_,T)|T1]).
+
+%Seguir buscando si no coincide
+eor(Id, Rels_Inst, NomClase, [_|T]):- 
+	eor(Id, Rels_Inst, NomClase, T).
+
+ec_objetoR(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Insts):-
+	append(Rels_Base,Rels,Rels_Insts).
+
+%Encontró la clase madre y mete sus relaciones a la lista.
+ec_objetoR(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Insts):-
+	append(Rels_Base,Rels,Rels_Raw), 
+	ec_objetoR(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Insts).
+
+%Seguir buscando la clase madre.
+ec_objetoR(NomClase, KB_Original, [_|T], Rels_Base, Rels_Insts):- 
+	ec_objetoR(NomClase, KB_Original, T, Rels_Base, Rels_Insts).
+
+rels_inst(Id, Rels_Inst, KB_Original) :- 	
+	eor(Id, Rels_Base, NomClase, KB_Original), ec_objetoR(NomClase, KB_Original, KB_Original, Rels_Base, Rels_Inst).
+
+%****************************************************************
+% 1f2. Todas las relaciones de una clase.
+%
+% Usage: rels_class(Id, Rels_Class, KnowledgeBase)
+%****************************************************************
+
+erc(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Insts):-
+	append(Rels_Base,Rels,Rels_Insts).
+
+%Encontró la clase madre y mete sus relaciones a la lista.
+erc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Insts):-
+	append(Rels_Base,Rels,Rels_Raw), 
+	erc(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Insts).
+
+%Seguir buscando la clase madre.
+erc(NomClase, KB_Original, [_|T], Rels_Base, Rels_Insts):- 
+	erc(NomClase, KB_Original, T, Rels_Base, Rels_Insts).
+
+rels_class(NomClase, Rels_Insts, KB_Original) :- 	
+	erc(NomClase, KB_Original, KB_Original, [], Rels_Insts).
+
+%****************************************************************
 % 2a. Agrega una nueva clase vacia.
 %****************************************************************
 
@@ -628,5 +767,3 @@ elimina_lista_objetos([NomObjeto|C],KB_Original,KB_Nuevo) :-
 	elimina_lista_objetos(C,KB_Original,KB_Aux),elimina_toda_relacion(NomObjeto,KB_Aux,KB_Nuevo).
 elimina_lista_objetos([NomObjeto|_],KB_Original,KB_Nuevo) :-
 	elimina_toda_relacion(NomObjeto,KB_Original,KB_Nuevo).
-
-
