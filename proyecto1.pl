@@ -389,6 +389,21 @@ class_inst(Id, Clases_Inst, KB_Original) :-
 % Usage: props_inst(Id, Props_Inst, KnowledgeBase)
 %****************************************************************
 
+attr_match(not(Attr), Lista) :- attr_match(Attr, Lista).
+attr_match(Attr => _, Lista) :- attr_match(Attr, Lista).
+attr_match(Attr, [Attr => _|_]).
+attr_match(Attr, [not(Attr)|_]).
+attr_match(Attr, [Attr|_]).
+attr_match(Attr, [_|T]) :- attr_match(Attr, T).
+
+merge_safe([Attr|T], Lista, Results) :- 
+	attr_match(Attr, Lista),
+	merge_safe(T, Lista, Results)
+	;
+	append(Lista, [Attr], Results_A),
+	merge_safe(T, Results_A, Results).
+merge_safe([], Results, Results).
+
 %Buscar objeto/instancia que coincida con el id
 eop(Id, Props_Inst, NomClase, [class(NomClase,_,_,_,[[id=>Id,Props_Inst,_]|_])|_]).
 
