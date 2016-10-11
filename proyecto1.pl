@@ -208,6 +208,10 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
+filter_not([_:not(_)|T], R) :- filter_not(T, R).
+filter_not([H|T], [H|R]) :- filter_not(T, R).
+filter_not([], []).
+
 select_yes([Attr:yes|T], [Attr:yes|R]) :- select_yes(T, R).
 select_yes([_|T], R) :- select_yes(T,R).
 select_yes([], []).
@@ -218,8 +222,11 @@ select_yes([], []).
 
 extension_propiedad(not(Attr), Results, KB_Original) :- 
 	ep_find_root(top, not(Attr), Results_A, KB_Original, KB_Original),
-	select_yes(Results_A, Results).
-extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
+	select_yes(Results_A, Results_B),
+	filter_not(Results_B, Results).
+extension_propiedad(Attr, Results, KB_Original) :- 
+	ep_find_root(top, Attr, Results_A, KB_Original, KB_Original),
+	filter_not(Results_A, Results).
 
 %****************************************************************
 % 1c. Extensiones de una relación
