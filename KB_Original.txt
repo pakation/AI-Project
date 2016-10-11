@@ -1,1 +1,12 @@
-[clase(top,none,[],[],[]),clase(animal,top,[alfa => a],[beta => b],[gamma => g])]
+[
+	class(top,none,[],[],[]),
+	class(animal,top,[],[],[]),
+	class(machine,top,[],[be=>ballenita],[]),
+	class(mammal,animal,[has_legs,not(can_fly)],[],[]),
+	class(mouse,mammal,[],[],[[id=>mickey,props=>[yei=>bye],rels=>[]],[id=>timothy,[],[]]]),
+	class(whale,mammal,[not(has_legs)],[],[[id=>monstro,[],[friend=>mickey]],[id=>ballenita,[],[]]]),
+	class(elephant,mammal,[],[hate=>human],[[id=>'Mrs Jumbo',[],[]],[id=>dumbo,[can_fly],[hate=>'the ringmaster']]]),
+	class(human,mammal,[],[play=>toy,not(hate=>mouse),hate=>monstro],[[id=>'the ringmaster',[],[]],[id=>geppeto,[],[inside=>monstro,hate=>mouse]]]),
+	class(toy,machine,[],[],[[id=>pinochio,[not(eat)],[love=>ballenita]]]),
+	class(mini_whale,whale,[],[],[])
+]
