@@ -415,11 +415,11 @@ eop(Id, Props_Inst, NomClase, [_|T]):-
 	eop(Id, Props_Inst, NomClase, T).
 
 ec_objetoP(NomClase, _, [class(NomClase,top,Props,_,_)|_], Props_Base, Props_Insts):-
-	append(Props_Base,Props,Props_Insts).
+	merge_safe(Props,Props_Base,Props_Insts).
 
 %Encontró la clase madre y mete sus propiedades a la lista.
 ec_objetoP(NomClase, KB_Original, [class(NomClase,NomClaseMadre,Props,_,_)|_], Props_Base, Props_Insts):-
-	append(Props_Base,Props,Props_Raw),
+	merge_safe(Props,Props_Base,Props_Raw),
 	ec_objetoP(NomClaseMadre, KB_Original, KB_Original, Props_Raw, Props_Insts).
 
 %Seguir buscando la clase madre.
@@ -436,11 +436,11 @@ props_inst(Id, Props_Inst, KB_Original) :-
 %****************************************************************
 
 epc(NomClase, _, [class(NomClase,top,Props,_,_)|_], Props_Base, Props_Insts):-
-	append(Props_Base,Props,Props_Insts).
+	merge_safe(Props,Props_Base,Props_Insts).
 
 %Encontró la clase madre y mete sus propiedades a la lista.
 epc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,Props,_,_)|_], Props_Base, Props_Insts):-
-	append(Props_Base,Props,Props_Raw), 
+	merge_safe(Props,Props_Base,Props_Raw), 
 	epc(NomClaseMadre, KB_Original, KB_Original, Props_Raw, Props_Insts).
 
 %Seguir buscando la clase madre.
@@ -467,11 +467,11 @@ eor(Id, Rels_Inst, NomClase, [_|T]):-
 	eor(Id, Rels_Inst, NomClase, T).
 
 ec_objetoR(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Insts):-
-	append(Rels_Base,Rels,Rels_Insts).
+	merge_safe(Rels,Rels_Base,Rels_Insts).
 
 %Encontró la clase madre y mete sus relaciones a la lista.
 ec_objetoR(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Insts):-
-	append(Rels_Base,Rels,Rels_Raw), 
+	merge_safe(Rels,Rels_Base,Rels_Raw), 
 	ec_objetoR(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Insts).
 
 %Seguir buscando la clase madre.
@@ -488,11 +488,11 @@ rels_inst(Id, Rels_Inst, KB_Original) :-
 %****************************************************************
 
 erc(NomClase, _, [class(NomClase,top,_,Rels,_)|_], Rels_Base, Rels_Insts):-
-	append(Rels_Base,Rels,Rels_Insts).
+	merge_safe(Rels,Rels_Base,Rels_Insts).
 
 %Encontró la clase madre y mete sus relaciones a la lista.
 erc(NomClase, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,_)|_], Rels_Base, Rels_Insts):-
-	append(Rels_Base,Rels,Rels_Raw), 
+	merge_safe(Rels,Rels_Base,Rels_Raw), 
 	erc(NomClaseMadre, KB_Original, KB_Original, Rels_Raw, Rels_Insts).
 
 %Seguir buscando la clase madre.
