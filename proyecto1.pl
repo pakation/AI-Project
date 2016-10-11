@@ -382,7 +382,7 @@ ec_objeto(top,_,_,Clases_Raw,Clases_Insts):-
 	append(Clases_Raw,[top],Clases_Insts).
 
 class_inst(Id, Clases_Inst, KB_Original) :- 
-	eo(Id, NomClase, KB_Original), ec_objeto(NomClase, KB_Original, KB_Original, [], Clases_Inst).
+	(eo(Id, NomClase, KB_Original), ec_objeto(NomClase, KB_Original, KB_Original, [], Clases_Inst)) ; write("No lo sé.").
 
 %****************************************************************
 % 1e1. Todas las propiedades de un objeto/instancia.
@@ -428,7 +428,7 @@ ec_objetoP(NomClase, KB_Original, [_|T], Props_Base, Props_Insts):-
 	ec_objetoP(NomClase, KB_Original, T, Props_Base, Props_Insts).
 
 props_inst(Id, Props_Inst, KB_Original) :- 	
-	eop(Id, Props_Base, NomClase, KB_Original), ec_objetoP(NomClase, KB_Original, KB_Original, Props_Base, Props_Inst).
+	(eop(Id, Props_Base, NomClase, KB_Original), ec_objetoP(NomClase, KB_Original, KB_Original, Props_Base, Props_Inst)) ; write("No lo sé.").
 
 %****************************************************************
 % 1e2. Todas las propiedades de una clase.
@@ -449,7 +449,7 @@ epc(NomClase, KB_Original, [_|T], Props_Base, Props_Insts):-
 	epc(NomClase, KB_Original, T, Props_Base, Props_Insts).
 
 props_class(NomClase, Props_Inst, KB_Original) :- 	
-	epc(NomClase, KB_Original, KB_Original, [], Props_Inst).
+	(epc(NomClase, KB_Original, KB_Original, [], Props_Inst)) ; write("No lo sé.").
 
 %****************************************************************
 % 1f1. Todas las relaciones de un objeto/instancia.
@@ -480,7 +480,7 @@ ec_objetoR(NomClase, KB_Original, [_|T], Rels_Base, Rels_Insts):-
 	ec_objetoR(NomClase, KB_Original, T, Rels_Base, Rels_Insts).
 
 rels_inst(Id, Rels_Inst, KB_Original) :- 	
-	eor(Id, Rels_Base, NomClase, KB_Original), ec_objetoR(NomClase, KB_Original, KB_Original, Rels_Base, Rels_Inst).
+	(eor(Id, Rels_Base, NomClase, KB_Original), ec_objetoR(NomClase, KB_Original, KB_Original, Rels_Base, Rels_Inst)) ; write("No lo sé.").
 
 %****************************************************************
 % 1f2. Todas las relaciones de una clase.
@@ -501,7 +501,7 @@ erc(NomClase, KB_Original, [_|T], Rels_Base, Rels_Insts):-
 	erc(NomClase, KB_Original, T, Rels_Base, Rels_Insts).
 
 rels_class(NomClase, Rels_Insts, KB_Original) :- 	
-	erc(NomClase, KB_Original, KB_Original, [], Rels_Insts).
+	(erc(NomClase, KB_Original, KB_Original, [], Rels_Insts)) ; write("No lo sé.").
 
 %****************************************************************
 % 2a. Agrega una nueva clase vacia.
