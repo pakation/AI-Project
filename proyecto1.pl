@@ -89,7 +89,7 @@ ec(NomClase, Insts, KB_Original, [class(NomClase,_,_,_,Insts_A)|_]) :-
 % Recursión. Si NomClase no corresponde con el valor de Madre de este class, seguir con el resto de la lista
 ec(NomClase, Exts, KB_Original, [_|T]) :- ec(NomClase, Exts, KB_Original, T).
 % Caso base. Cuando ya no tenemos elementos para probar, devolver una lista vacia
-ec(_, [], _, []).
+%ec(_, [], _, []).
 
 % Convertir una lista de objectos a una lista de sus ids
 insts_ids([[id => Name,_,_]| T], Ids, Ids_New) :-
@@ -99,7 +99,8 @@ insts_ids([], Ids, Ids).
 
 extension_class(NomClase, Ids, KB_Original) :-
 	ec(NomClase, Insts_Raw, KB_Original, KB_Original),
-	insts_ids(Insts_Raw, [], Ids).
+	insts_ids(Insts_Raw, [], Ids)
+	; Ids = unknown.
 
 %****************************************************************
 % 1b. Extensiones de una propiedad
