@@ -203,6 +203,10 @@ ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClase
 ep_find_root(NomClaseMadre, Attr, Results, KB_Original, [_|T]) :- ep_find_root(NomClaseMadre, Attr, Results, KB_Original, T).
 ep_find_root(_, _, [], _, []).
 
+% sobreescribir todos los valores para que sean yes
+%overwrite([Attr : _|T], [Attr : yes|R]) :- overwrite(T, R).
+%overwrite([], []).
+
 extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Results, KB_Original, KB_Original).
 
 %****************************************************************
@@ -211,10 +215,14 @@ extension_propiedad(Attr, Results, KB_Original) :- ep_find_root(top, Attr, Resul
 % Usage: extension_relación(Typ, Extensiones, KnowledgeBase)
 %****************************************************************
 
+get_value_strict(not(Attr) => Value, [not(Attr => Value)|_]).
+get_value_strict(Attr => Value, [Attr => Value|_]).
+get_value_strict(Elemento, [_|T]) :- get_value_strict(Elemento, T).
+
 % Buscar por la extension de una clase. Si ningun objectos existen,
 %  considerar la clase una objecto.
-extension_or_object(not(Algo), not(Insts), KB_Original) :-
-	extension_or_object(Algo, Insts, KB_Original).
+%extension_or_object(not(Algo), not(Insts), KB_Original) :-
+%	extension_or_object(Algo, Insts, KB_Original).
 extension_or_object(NomClase, Insts, KB_Original) :-
 	extension_class(NomClase, Subjs, KB_Original),
 	not_empty(Subjs),
@@ -232,7 +240,7 @@ extension_or_object(NomClase, Insts, KB_Original) :-
 package_relation(Attr, [[id=>Name,_,rels => Rels]|T], Subjs, Results, Results_New, KB_Original) :-
 	package_relation(Attr, [[id=>Name,_,Rels]|T], Subjs, Results, Results_New, KB_Original).
 package_relation(Attr, [[id=>Name,_,Rels]|T], Subjs, Results, Results_New, KB_Original) :-
-	get_value(Attr => Value, Rels), % buscar si objecto especifica una relación
+	get_value_strict(Attr => Value, Rels), % buscar si objecto especifica una relación
 	extension_or_object(Value, SubjsNew, KB_Original),
 	append(Results, [Name:SubjsNew], Results_A),
 	package_relation(Attr, T, Subjs, Results_A, Results_New, KB_Original)
@@ -253,7 +261,7 @@ package_relation(_, [], _, Results, Results, _).
 %  KB_Original		Knowledge base
 %  ...				Lista de objectos quienes tienen esa relación
 er_madre(Attr, Value, NomClaseMadre, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
-	get_value(Attr => ValueNew, Rels), % buscar para propiedad
+	get_value_strict(Attr => ValueNew, Rels), % buscar para propiedad
 	extension_or_object(ValueNew, Subjs, KB_Original),
 	% seleccionar la nueva relación
 	package_relation(Attr, Insts, Subjs, [], Results_A, KB_Original),
@@ -286,7 +294,7 @@ not_empty([_|_]).
 er_objecto(Attr, [[id=>Name,_,rels => Rels]|T], Results, Results_New, KB_Original) :-
 	er_objecto(Attr, [[id=>Name,_,Rels]|T], Results, Results_New, KB_Original).
 er_objecto(Attr, [[id=>Name,_,Rels]|T], Results, Results_New, KB_Original) :-
-	get_value(Attr => Value, Rels), % buscar para relacion
+	get_value_strict(Attr => Value, Rels), % buscar para relacion
 	extension_or_object(Value, Subjs, KB_Original), % tiene la relación
 	append(Results, [Name:Subjs], Results_A),
 	er_objecto(Attr, T, Results_A, Results_New, KB_Original) % seguir buscando por más que tiene la relación
@@ -303,9 +311,10 @@ er_objecto(_, [], Results, Results, _).
 %  KB_Original		KB
 %  ...				Clase al head
 er_find_root(NomClaseMadre, Attr, Results, KB_Original, [class(NomClase,NomClaseMadre,_,Rels,Insts)|T]) :-
-	get_value(Attr => Value, Rels), % buscar para propiedad
+	get_value_strict(Attr => Value, Rels), % buscar para propiedad
 	extension_or_object(Value, Subjs, KB_Original),
 	% formatar la relación
+	write(Insts),
 	package_relation(Attr, Insts, Subjs, [], Results_A, KB_Original),
 	% seguir buscando en longitud primero
 	ignore(er_find_root(NomClaseMadre, Attr, Results_B, KB_Original, T)),
