@@ -1,10 +1,7 @@
 % :- ensure_loaded(proyecto1).
 
-% TODO generar_explicaciones needs to generate a 2d array
-%
-% TODO si creemos que alpha está en s1, hemos observado s1, y alpha no está
-%	en s1 esto es contradicción tambien
-% TODO handle cases where there are no contradicions...
+% TODO deal with observations where shelf is totally empty
+% TODO handle cases where there are no contradicions
 
 :- op(800,xfx,'=>').
 
@@ -29,13 +26,6 @@
 % choose the permutation that is the closest to expected
 % generate move,colocar pairs for this permutation
 
-% return true if the item is observed on the shelf it should be on or if
-% neither the item nor the shelf have been observed at all.
-% is_consistent(_, _, []).
-% is_consistent(Item, Shelf, [Item => Shelf|_]).
-% is_consistent(Item, _, [Item => _|_]) :- !, false.
-% is_consistent(Item, Shelf, [_|T]) :- is_consistent(Item, Shelf, T).
-
 % returns true if the item has been seen on a different shelf, or the item
 % has never been seen but the shelf that the item should be on has been,
 % false otherwise.
@@ -49,9 +39,8 @@ do_contradicts_obs(Item, Shelf, [_|T], Seen_Shelf, Seen_Shelf_New) :- do_contrad
 % Creencias, creencias nuevos, observaciones, acciones
 diagnosis(Creencias, Observaciones, Creencias_New, []) :- 
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
-	write(Creencias_Malos),
-	generar_explicaciones(Creencias_Malos, Observaciones, [s1,s2,s3], [], Explicaciones),
-	write(Explicaciones),
+	generar_posibilidades(Creencias_Malos, Observaciones, [s1,s2,s3], Posibilidades),
+	generar_explicaciones(Posibilidades, [], [], Explicaciones),
 	eligir_explicacion(Creencias, Explicaciones, Eligido),
 	nl,
 	write(Eligido).
@@ -85,32 +74,40 @@ has_seen_shelf(Shelf, [_|T]) :- has_seen_shelf(Shelf, T).
 is_on_shelf(Item, Shelf, [Item => Shelf|_]).
 is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
-% Generate explanations by first checking to see if the robot has sighted
-% the object, then by ruling out shelves previously seen that don't have the
-% item
-generar_explicaciones([], _, _, Expl_New, Expl_New).
-generar_explicaciones([Item|T], Obvs, Shelves, Expl_A, Expl_New) :-
+% For each item, generate a set of possible shelves that the item could 
+% possibly be
+generar_posibilidades([], _, _, []).
+generar_posibilidades([Item|T], Obvs, Shelves, [Set|Set_T]) :-
 	is_on_shelf(Item, Shelf, Obvs), % if it's on the shelf we have a perfect correction
-	append(Expl_A, [Item => Shelf], Expl_B),
-	generar_explicaciones(T, Obvs, Shelves, Expl_B, Expl_New)
+	Set = [Item => Shelf],
+	generar_posibilidades(T, Obvs, Shelves, Set_T)
 	; 
-	expandir_explicaciones(Item, Shelves, Obvs, Expl_A, Expl_B), % if not, generate all possible corrections
-	generar_explicaciones(T, Obvs, Shelves, Expl_B, Expl_New).
+	do_generar_posibilidades(Item, Shelves, Obvs, [], Set), % if not, generate all possible corrections
+	generar_posibilidades(T, Obvs, Shelves, Set_T).
 
 % Expand explanations, if they do not conflict with observations
 % Item, [Shelves], [Observations], [], >Explanations)
-expandir_explicaciones(_, [], _, Expl_New, Expl_New).
-expandir_explicaciones(Item, [Shelf|T], Obvs, Expl_A, Expl_New) :-
+do_generar_posibilidades(_, [], _, Expl_New, Expl_New).
+do_generar_posibilidades(Item, [Shelf|T], Obvs, Expl_A, Expl_New) :-
 	has_seen_shelf(Shelf, Obvs),
 	% if the robot has already seen this shelf then if the item is on it,
 	% is_on_shelf called by parent should be true. otherwise, the item can't
 	% possibly be on this shelf so do not add.
-	expandir_explicaciones(Item, T, Obvs, Expl_A, Expl_New)
+	do_generar_posibilidades(Item, T, Obvs, Expl_A, Expl_New)
 	;
 	% if the robot has not seen this shelf the item may possibly be on it.
 	append(Expl_A, [Item => Shelf], Expl_B),
-	expandir_explicaciones(Item, T, Obvs, Expl_B, Expl_New)
+	do_generar_posibilidades(Item, T, Obvs, Expl_B, Expl_New)
 	.
+
+generar_explicaciones([[]], Cadena, Results_New, Results_New).
+generar_explicaciones([], Cadena, Results_A, Results_New) :-
+	append(Results_A, [Cadena], Results_New).
+generar_explicaciones([[]|T], Cadena, Results_New, Results_New).
+generar_explicaciones([[Item => Shelf|T]|T_2], Cadena_A, Results_A, Results_New) :-
+	append(Cadena_A, [Item => Shelf], Cadena_B),
+	generar_explicaciones(T_2, Cadena_B, Results_A, Results_B),
+	generar_explicaciones([T|T_2], Cadena_A, Results_B, Results_New).
 
 % test([], Choice_New, Choice_New, Min_New, Min_New).
 % test([Key => Number|T], Choice, Choice_New, Min, Min_New) :-
