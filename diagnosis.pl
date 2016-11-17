@@ -8,10 +8,11 @@
 % Creencias, creencias nuevos, observaciones, acciones
 diagnosis(Creencias, Observaciones, Creencias_New, []) :- 
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
-	generar_posibilidades(Creencias_Malos, Observaciones, [s1,s2,s3], Posibilidades),
+	generar_posibilidades(Creencias_Malos, Observaciones, [s1,s2,s3], [], Posibilidades),
 	generar_explicaciones(Posibilidades, [], [], Explicaciones),
 	eligir_explicacion(Creencias, Explicaciones, Eligido),
-	aplicar_explicacion(Creencias, Eligido, Creencias_New).
+	append(Creencias_Limpios, Eligido, Creencias_New).
+	%aplicar_explicacion(Creencias_Limpios, Eligido, Creencias_New).
 
 % returns true if the item has been seen on a different shelf, or the item
 % has never been seen but the shelf that the item should be on has been,
@@ -40,6 +41,14 @@ remove_inconsistencies([Item => Shelf|T], Obvs, Creencias_Malos_A, Creencias_Mal
 	remove_inconsistencies(T, Obvs, Creencias_Malos_A, Creencias_Malos, Creencias_B, Creencias_New)
 	.
 
+% true if every shelf has been seen, false otherwise
+% has_seen_all_shelves([], Obvs).
+% has_seen_all_shelves([Shelf|T], Obvs) :-
+% 	has_seen_shelf(Shelf, Obvs),
+% 	has_seen_all_shelves(T, Obvs)
+% 	;
+% 	false.
+
 % true if the robot has seen the given shelf, false otherwise
 has_seen_shelf(Shelf, [_ => Shelf|_]).
 has_seen_shelf(Shelf, [_|T]) :- has_seen_shelf(Shelf, T).
@@ -49,14 +58,22 @@ is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
 % For each item, generate a set of possible shelves that the item could 
 % possibly be
-generar_posibilidades([], _, _, []).
-generar_posibilidades([Item|T], Obvs, Shelves, [Set|Set_T]) :-
+generar_posibilidades([], _, _, Set_New, Set_New).
+generar_posibilidades([Item|T], Obvs, Shelves, Set_A, Set_New) :-
 	is_on_shelf(Item, Shelf, Obvs), % if it's on the shelf we have a perfect correction
-	Set = [Item => Shelf],
-	generar_posibilidades(T, Obvs, Shelves, Set_T)
+	append(Set_A, [[Item => Shelf]], Set_B),
+	generar_posibilidades(T, Obvs, Shelves, Set_B, Set_New)
 	; 
 	do_generar_posibilidades(Item, Shelves, Obvs, [], Set), % if not, generate all possible corrections
-	generar_posibilidades(T, Obvs, Shelves, Set_T).
+	(
+		not_empty(Set),
+		append(Set_A, [Set], Set_B),
+		generar_posibilidades(T, Obvs, Shelves, Set_B, Set_New)
+		;
+		generar_posibilidades(T, Obvs, Shelves, Set_A, Set_New)
+	).
+
+not_empty([_]).
 
 % Expand explanations, if they do not conflict with observations
 % Item, [Shelves], [Observations], [], >Explanations)
@@ -75,9 +92,10 @@ do_generar_posibilidades(Item, [Shelf|T], Obvs, Expl_A, Expl_New) :-
 
 % given a 2d array of posibilities, expand it into a flat 1d array of
 % all permutations. So [[1,2],[3,4]] should turn into [[1,3],[1,4],[2,3],2,4]]
-generar_explicaciones([[]], Cadena, Results_New, Results_New).
 generar_explicaciones([], Cadena, Results_A, Results_New) :-
 	append(Results_A, [Cadena], Results_New).
+% case where there are no posibilities for an item
+generar_explicaciones([[]], Cadena, Results_New, Results_New).
 generar_explicaciones([[]|T], Cadena, Results_New, Results_New).
 generar_explicaciones([[Item => Shelf|T]|T_2], Cadena_A, Results_A, Results_New) :-
 	append(Cadena_A, [Item => Shelf], Cadena_B),
