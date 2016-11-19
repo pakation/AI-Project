@@ -1,18 +1,19 @@
 % :- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
 
+% TODO deal with observation turning up a product thought to not be in stock
 % TODO deal with observations where shelf is totally empty
 % TODO handle cases where there are no contradicions
 % TODO turn Creencias_New into Acciones (why?)
 
 % Creencias, creencias nuevos, observaciones, acciones
-diagnosis(Creencias, Observaciones, Creencias_New, []) :- 
+diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :- 
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
-	generar_posibilidades(Creencias_Malos, Observaciones, [s1,s2,s3], [], Posibilidades),
+	generar_posibilidades(Creencias_Malos, Observaciones, Estantes, [], Posibilidades),
 	generar_explicaciones(Posibilidades, [], [], Explicaciones),
 	eligir_explicacion(Creencias, Explicaciones, Eligido),
-	append(Creencias_Limpios, Eligido, Creencias_New).
-	%aplicar_explicacion(Creencias_Limpios, Eligido, Creencias_New).
+	append(Creencias_Limpios, Eligido, Creencias_New),
+	generate_shopkeeper_actions(Creencias_New, Estantes, l0, [], Acciones).
 
 % returns true if the item has been seen on a different shelf, or the item
 % has never been seen but the shelf that the item should be on has been,
@@ -74,6 +75,7 @@ generar_posibilidades([Item|T], Obvs, Shelves, Set_A, Set_New) :-
 	).
 
 not_empty([_]).
+not_empty([_|_]).
 
 % Expand explanations, if they do not conflict with observations
 % Item, [Shelves], [Observations], [], >Explanations)
@@ -95,8 +97,8 @@ do_generar_posibilidades(Item, [Shelf|T], Obvs, Expl_A, Expl_New) :-
 generar_explicaciones([], Cadena, Results_A, Results_New) :-
 	append(Results_A, [Cadena], Results_New).
 % case where there are no posibilities for an item
-generar_explicaciones([[]], Cadena, Results_New, Results_New).
-generar_explicaciones([[]|T], Cadena, Results_New, Results_New).
+generar_explicaciones([[]], _, Results_New, Results_New).
+generar_explicaciones([[]|_], _, Results_New, Results_New).
 generar_explicaciones([[Item => Shelf|T]|T_2], Cadena_A, Results_A, Results_New) :-
 	append(Cadena_A, [Item => Shelf], Cadena_B),
 	generar_explicaciones(T_2, Cadena_B, Results_A, Results_B),
@@ -160,3 +162,26 @@ do_aplicar_explicacion(Item, Shelf, [Item => _|T], [Item => Shelf_Old|T]) :-
 	Shelf_Old = Shelf.
 do_aplicar_explicacion(Item, Shelf, [H|T], [H|T_New]) :-
 	do_aplicar_explicacion(Item, Shelf, T, T_New).
+
+% generates actions that the shopkeeper takes to fill the scenario in creencias
+generate_shopkeeper_actions(_, [], _, Actions_New, Actions_New).
+generate_shopkeeper_actions(Creencias, [Shelf|T], Location, Actions_A, Actions_New) :-
+	will_visit_shelf(Creencias, Shelf),
+	append(Actions_A, [mover(Location, Shelf)], Actions_B),
+	do_generate_actions(Creencias, Shelf, Actions_B, Actions_C),
+	generate_shopkeeper_actions(Creencias, T, Shelf, Actions_C, Actions_New)
+	;
+	generate_shopkeeper_actions(Creencias, T, Location, Actions_A, Actions_New).
+
+% returns true if the shopkeeper will visit the shelf during his routine,
+% that is, if the shopkeeper will place an item on that shelf
+will_visit_shelf([_ => Shelf|_], Shelf).
+will_visit_shelf([_|T], Shelf) :- will_visit_shelf(T, Shelf).
+
+do_generate_actions([], _, Actions_New, Actions_New).
+do_generate_actions([Item => Shelf|T], Shelf, Actions_A, Actions_New) :-
+	append(Actions_A, [colocar(Item)], Actions_B),
+	do_generate_actions(T, Shelf, Actions_B, Actions_New).
+do_generate_actions([_|T], Shelf, Actions_A, Actions_New) :-
+	do_generate_actions(T, Shelf, Actions_A, Actions_New).
+
