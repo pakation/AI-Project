@@ -1,10 +1,15 @@
 % :- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
 
-% TODO deal with observation turning up a product thought to not be in stock
-% TODO deal with observations where shelf is totally empty
-% TODO handle cases where there are no contradicions
-% TODO turn Creencias_New into Acciones (why?)
+% cases handled
+%	new item
+%	location contradiction
+%	location contradiction such that item cannot possibly be anywhere
+%	no contradictions
+%
+% TODO deal with observations where shelf is totally empty 
+% (have caller inject a special "empty => s1" item without it being 
+% considered as product?)
 
 % Creencias, creencias nuevos, observaciones, acciones
 diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :- 
@@ -12,8 +17,20 @@ diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :-
 	generar_posibilidades(Creencias_Malos, Observaciones, Estantes, [], Posibilidades),
 	generar_explicaciones(Posibilidades, [], [], Explicaciones),
 	eligir_explicacion(Creencias, Explicaciones, Eligido),
-	append(Creencias_Limpios, Eligido, Creencias_New),
+	append(Creencias_Limpios, Eligido, Creencias_B),
+	new_obsv_to_creencias(Creencias_B, Observaciones, Creencias_New),
 	generate_shopkeeper_actions(Creencias_New, Estantes, l0, [], Acciones).
+
+is_item_expected(Item, [Item => _|_]).
+is_item_expected(Item, [_|T]) :- is_item_expected(Item, T).
+
+new_obsv_to_creencias(Creencias_New, [], Creencias_New).
+new_obsv_to_creencias(Creencias, [Item => Shelf|T], Creencias_New):-
+	not(is_item_expected(Item, Creencias)),
+	append(Creencias, [Item => Shelf], Creencias_B),
+	new_obsv_to_creencias(Creencias_B, T, Creencias_New)
+	;
+	new_obsv_to_creencias(Creencias, T, Creencias_New).
 
 % returns true if the item has been seen on a different shelf, or the item
 % has never been seen but the shelf that the item should be on has been,
