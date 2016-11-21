@@ -7,8 +7,7 @@ class(furniture,top,[],[],[]),
 class(shelfs,furniture,[],[],[[id=>shelf1,[],[]],[id=>shelf2,[],[]],[id=>shelf3,[],[]]]),
 class(robot,top,[],[],[[id=>fulanito,[has_right_arm,has_left_arm],[]]]),
 class(cliente,top,[],[],[[id=>pako,[],[]],[id=>diana,[],[]],[id=>derek,[],[]]]),
-class(states,top,[],[],[]),
-class(robot_status,states,[],[],[]),
-class(robot_beliefs,states,[],[],[]),
-class(pending_activities,states,[],[],[]),
-class(observations,states,[],[],[])]
+class(states,top,[],[],[]),class(robot_status,states,[],[],[]),
+class(robot_beliefs,states,[],[],[[id=>report,[],[refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3]]]),
+class(pending_activities,states,[],[],[[id=>entregar(robot,refresco,cliente),[],[]]]),
+class(robot_observations,states,[],[],[[id=>observations,[],[refresco=>shelf1,cerveza=>shelf1]]])]
