@@ -1,0 +1,18 @@
+Tested at: commit bd27f792481964c8f1b9bf30a7177f6d4608e835
+
+Ejercicio 1
+Ideal: refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3
+
+a) [refresco=>shelf1, cerveza=>shelf1, sopa=>shelf2, galletas=>shelf3]
+b) [refresco=>shelf1, cerveza=>shelf1, galletas=>shelf3, sopa=>shelf1]
+c) [refresco=>shelf1, cerveza=>shelf1, sopa=>shelf1, galletas=>shelf1, cereal=>shelf1]
+d) [cerveza=>shelf1, galletas=>shelf3, refresco=>shelf2, sopa=>shelf1]
+e) [cerveza=>shelf1, galletas=>shelf3, refresco=>shelf2, sopa=>shelf1, cereal=>shelf1]
+f) [sopa=>shelf2, galletas=>shelf3, refresco=>shelf2, cerveza=>shelf2, empty=>shelf1]
+g) [refresco=>shelf2, cerveza=>shelf3, sopa=>shelf1, galletas=>shelf1]
+h) [sopa=>shelf2, refresco=>shelf2, cerveza=>shelf3, galletas=>shelf1]
+i) [galletas=>shelf3, refresco=>shelf2, cerveza=>shelf2, sopa=>shelf1, cereal=>shelf1]
+j) [cerveza=>shelf1, refresco=>shelf2, sopa=>shelf1, galletas=>shelf1, cereal=>shelf1]
+
+Ejercicio 2
+Ideal: refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3
