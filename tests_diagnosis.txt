@@ -16,3 +16,9 @@ j) [cerveza=>shelf1, refresco=>shelf2, sopa=>shelf1, galletas=>shelf1, cereal=>s
 
 Ejercicio 2
 Ideal: refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3
+a) [cerveza=>shelf1, sopa=>shelf2, galletas=>shelf3, refresco=>shelf2, cereal=>shelf2]
+b) [cerveza=>shelf1, sopa=>shelf2, galletas=>shelf3, refresco=>shelf3, cereal=>shelf2]
+c) [cerveza=>shelf1, sopa=>shelf2, refresco=>shelf3, galletas=>shelf2, cereal=>shelf2]
+
+Ejercicio 3
+-- Estos escenarios no cambian los resultados del diagnostico

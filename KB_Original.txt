@@ -1,10 +1,10 @@
 [
 	class(top,none,[],[],[]),
-	class(animal,top,[],[],[]),
+	class(animal,top,[respira=>aire],[],[]),
 	class(machine,top,[],[be=>ballenita],[]),
 	class(mammal,animal,[has_legs,not(can_fly)],[loves=>me],[]),
 	class(mouse,mammal,[],[],[[id=>mickey,[yei=>bye],[]],[id=>timothy,[],[]]]),
-	class(whale,mammal,[not(has_legs)],[],[[id=>monstro,[],[friend=>mickey]],[id=>ballenita,[],[]]]),
+	class(whale,mammal,[not(has_legs),not(respira=>aire)],[],[[id=>monstro,[],[friend=>mickey]],[id=>ballenita,[],[]]]),
 	class(elephant,mammal,[],[hate=>human],[[id=>'Mrs Jumbo',[],[]],[id=>dumbo,[can_fly],[hate=>'the ringmaster']]]),
 	class(human,mammal,[],[play=>toy,not(hate=>mouse),hate=>monstro],[[id=>'the ringmaster',[],[]],[id=>geppeto,[],[inside=>monstro,hate=>mouse]]]),
 	class(toy,machine,[],[],[[id=>pinochio,[not(eat)],[love=>ballenita]]]),

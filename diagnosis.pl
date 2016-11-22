@@ -1,4 +1,4 @@
-% :- ensure_loaded(proyecto1).
+:- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
 
 % cases handled
@@ -7,12 +7,21 @@
 %	location contradiction such that item cannot possibly be anywhere
 %	no contradictions
 %
+% TODO if the item that appeared in Observations is not known in the kb,
+% do not add it to creencias
+%
 % TODO deal with observations where shelf is totally empty 
 % (have caller inject a special "empty => s1" item without it being 
 % considered as product?)
 
+diagnosis(KB, Creencias_New, Acciones) :-
+	rels_inst(report, Creencias, KB),
+	rels_inst(observations, Observaciones, KB),
+	extension_class(shelves, Estantes, KB),
+	do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones).
+
 % Creencias, creencias nuevos, observaciones, acciones
-diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :- 
+do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :- 
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
 	generar_posibilidades(Creencias_Malos, Observaciones, Estantes, [], Posibilidades),
 	generar_explicaciones(Posibilidades, [], [], Explicaciones),
@@ -192,13 +201,22 @@ generate_shopkeeper_actions(Creencias, [Shelf|T], Location, Actions_A, Actions_N
 
 % returns true if the shopkeeper will visit the shelf during his routine,
 % that is, if the shopkeeper will place an item on that shelf
-will_visit_shelf([_ => Shelf|_], Shelf).
+will_visit_shelf([Item => Shelf|T], Shelf) :- 
+	not(is_special_item_empty(Item))
+	; will_visit_shelf(T, Shelf).
 will_visit_shelf([_|T], Shelf) :- will_visit_shelf(T, Shelf).
+
+% true if we have a match with empty
+is_special_item_empty(empty).
 
 do_generate_actions([], _, Actions_New, Actions_New).
 do_generate_actions([Item => Shelf|T], Shelf, Actions_A, Actions_New) :-
+	not(is_special_item_empty(Item)),
+	% do not append "empty" to the actions
 	append(Actions_A, [colocar(Item)], Actions_B),
-	do_generate_actions(T, Shelf, Actions_B, Actions_New).
+	do_generate_actions(T, Shelf, Actions_B, Actions_New)
+	;
+	do_generate_actions(T, Shelf, Actions_A, Actions_New).
 do_generate_actions([_|T], Shelf, Actions_A, Actions_New) :-
 	do_generate_actions(T, Shelf, Actions_A, Actions_New).
 

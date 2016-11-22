@@ -4,7 +4,7 @@ class(comida,comestible,[],[comida=>shelf2],[[id=>sopa,[],[]],[id=>cereal,[],[]]
 class(bebidas,comestible,[],[bebidas=>shelf1],[[id=>cerveza,[],[]],[id=>refresco,[],[]]]),
 class(pan,comestible,[],[pan=>shelf3],[[id=>galletas,[],[]]]),
 class(furniture,top,[],[],[]),
-class(shelfs,furniture,[],[],[[id=>shelf1,[],[]],[id=>shelf2,[],[]],[id=>shelf3,[],[]]]),
+class(shelves,furniture,[],[],[[id=>shelf1,[],[]],[id=>shelf2,[],[]],[id=>shelf3,[],[]]]),
 class(robot,top,[],[],[[id=>fulanito,[has_right_arm,has_left_arm],[]]]),
 class(cliente,top,[],[],[[id=>pako,[],[]],[id=>diana,[],[]],[id=>derek,[],[]]]),
 class(states,top,[],[],[]),class(robot_status,states,[],[],[]),
