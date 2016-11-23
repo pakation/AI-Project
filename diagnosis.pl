@@ -1,6 +1,8 @@
 :- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
 
+% TODO if the explanation is 'perfect', take it right away
+
 % cases handled
 %	new item
 %	location contradiction

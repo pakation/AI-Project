@@ -1,0 +1,120 @@
+\documentclass[11pt,fleqn]{article}
+\usepackage{amsmath,amssymb}
+\usepackage[utf8]{inputenc} \usepackage[letterpaper, total={6.5in, 8.5in}]{geometry}
+\usepackage{multicol}
+\setlength\columnsep{30pt}
+\usepackage{enumerate}
+\usepackage{listings}
+\lstset{breaklines,basicstyle=\ttfamily,columns=fullflexible,keepspaces=true,breakindent=0pt,belowskip=-8pt}
+
+\begin{document}
+\title{Proyecto de Búsqueda}
+\author{
+	Cheung, Derek \\
+	González Rico, Diana Virginia \\
+	Neri González, José Francisco
+}
+\date{23 noviembre 2016}
+\maketitle
+
+\section{Módulo de Diagnóstico}
+
+\paragraph{Descripción} El módulo de diagnóstico toma todas las creencias sobre el escenario y lo comparan contra las observaciónes. En caso de que haya contradiciones, genera un diagnóstico posible para explicar posibles razones.
+
+\subsection*{Nombre}
+	\begin{verbatim}
+		diagnosis(KB, Creencias_New, Acciones)
+	\end{verbatim}
+
+\subsection*{Argumentos}
+	\textit{KB}: (Input) Base de conocimiento a consultar \\
+	\textit{Creencias\_New}: Lista de creencias representado en forma de clave y valor \\
+	\textit{Acciones}: Lista de acciones que hizo el asistente
+
+\paragraph{Búsqueda} El módulo emplea el siguiente algoritmo de búsquedas. Para cada objecto que está probado como fuera de su lugar por alguna observación, genera una lista de todas las estantes donde este objecto podría estar, es decir todos los lugares que no va a resultar en contradiciones con los observaciones actuales. Luego combina todas las listas de todas las objectos para generar todas las diagnosticos posibles. Finalmente, para cada diagnostico calcula que tan diferente el diagnostico es de la creencias en temas de número de objectos en cada estante. Es decir, prefiere asumir que el asistente confundió un objecto por otro en vez de que se fue al estante equivocado. Por ejemplo, si debe de estar 2 objectos en la estante de bebidas y ningúno en comida, el algoritmo va a eligir un diagnostico que reporte 2 objectos en bebidas sobre uno que reporte 1 en cada uno.
+
+\subsection*{Ejemplos de uso}
+
+\subsubsection{}
+	\begin{tabular}{| l | l | l | l |}
+		\hline
+						& Shelf 1 & Shelf 2 & Shelf 3 \\ \hline
+		Creencias		& Refresco, Creveza & Sopa & Galletas \\ \hline
+		Observaciones	& Refresco, Creveza & & \\
+		\hline
+	\end{tabular}
+	\begin{lstlisting}
+?- open_kb('KB_Original.txt', KB), diagnosis(KB, Creencias_New, Acciones).
+Creencias_New = [refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3],
+Acciones = [mover(l0,shelf1),colocar(refresco),colocar(cerveza),mover(shelf1,shelf2),colocar(sopa),mover(shelf2,shelf3),colocar(galletas)],
+	\end{lstlisting}
+	\textit{Apuntes: No hubo contradiciones, entonces las creencias quedan sin cambios} \\
+
+\subsubsection{}
+	\begin{tabular}{| l | l | l | l |}
+		\hline
+						& Shelf 1 & Shelf 2 & Shelf 3 \\ \hline
+		Creencias		& Refresco, Creveza & Sopa & Galletas \\ \hline
+		Observaciones	& Refresco, Creveza, Sopa & & \\
+		\hline
+	\end{tabular}
+	\begin{lstlisting}
+?- open_kb('KB_Original.txt', KB), diagnosis(KB, Creencias_New, Acciones).
+Creencias_New = [refresco=>shelf1,cerveza=>shelf1,galletas=>shelf3,sopa=>shelf1],
+Acciones = [mover(l0,shelf1),colocar(refresco),colocar(cerveza),colocar(sopa),mover(shelf1,shelf3),colocar(galletas)],
+	\end{lstlisting}
+	\textit{Apuntes: No hay nada que contradiga que las galletas quedan en estante 3}
+
+\section{Módulo de Toma de Decisión}
+
+\paragraph{Descripción} El módulo de toma de decisión toma la creencia nueva generado por el módulo de diagnostico y genera una decisión sobre qué hacer para cumplir con el objectivo.
+
+\subsection*{Nombre}
+	\begin{verbatim}
+		decision(KB, Diagnostico, Decision)
+	\end{verbatim}
+
+\subsection*{Argumentos}
+	\textit{KB}: (Input) Base de conocimiento a consultar \\
+	\textit{Diagnostico}: (Input) Lista de creencias representado en forma de clave y valor \\
+	\textit{Decision}: Lista de decisiones de metas de cumplir 
+
+\paragraph{Búsqueda} 
+
+\subsection*{Ejemplos de uso}
+
+En los siguientes ejemplos, el cliente pide un refresco.
+
+\subsubsection{}
+	\begin{tabular}{| l | l | l | l |}
+		\hline
+						& Shelf 1 & Shelf 2 & Shelf 3 \\ \hline
+		Creencias		& Refresco, Creveza & Sopa & Galletas \\ \hline
+		Diagnóstico		& Refresco, Creveza & & \\
+		\hline
+	\end{tabular}
+	\begin{lstlisting}
+?- open_kb('KB_Original.txt', KB), 
+	\end{lstlisting}
+	\textit{Apuntes: No hay nada que reacomodar}
+
+\section{Módulo de Planeación}
+
+\paragraph{Descripción} El módulo de planeación toma la decisión emitido por el módulo de toma de decición y planea los acciones necesarios para cumplir con los objectivos.
+
+\subsection*{Nombre}
+	\begin{verbatim}
+		plan(KB, Diagnostico, Decision, Actions)
+	\end{verbatim}
+
+\subsection*{Argumentos}
+	\textit{KB}: (Input) Base de conocimiento a consultar \\
+	\textit{Diagnostico}: (Input) Lista de creencias representado en forma de clave y valor \\
+	\textit{Decision}: (Input) Lista de decisiones de metas de cumplir 
+	\textit{Actions}: Lista de decisiones de metas de cumplir 
+
+\paragraph{Búsqueda} 
+
+\subsection*{Ejemplos de uso}
+
+\end{document}
