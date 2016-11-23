@@ -1,18 +1,6 @@
 :- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
-
-% TODO more efficient diagnosis
 %
-% TODO if the item that appeared in Observations is not known in the kb,
-% do not add it to creencias
-%
-% TODO clean "empty" from Creencias if exists so that it doesn't interfere
-% with items-per-shelf count
-%
-% TODO consider, while generating, counting the number of 'wrong' objects
-% per shelf and if it exceeds the current minimum, throwing away all further
-% posibilities? (only works for positive numbers of wrong objects)
-
 % Punto de entrada
 %
 %****************************************************************
@@ -40,9 +28,23 @@ do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :-
 	% combinar las creencias limpiados con la explicación eligido
 	append(Creencias_Limpios, Eligido, Creencias_B),
 	% si observe objectos que no apareció antes en creencias, agregarlos ahora
-	new_obsv_to_creencias(Creencias_B, Observaciones, Creencias_New),
+	new_obsv_to_creencias(Creencias_B, Observaciones, Creencias_C),
+	% borrar el objecto especial 'empty'
+	remove_special_item_empty(Creencias_C, [], Creencias_New),
 	% generar los acciones que el asistente hizo para hacerlo real la nueva creencia
 	generate_shopkeeper_actions(Creencias_New, Estantes, l0, [], Acciones).
+
+% true if we have a match with empty
+is_special_item_empty(empty).
+
+% remove 'empty' from beliefs
+remove_special_item_empty([], Creencias_New, Creencias_New).
+remove_special_item_empty([Item => Shelf|T], Creencias_A, Creencias_New) :-
+	is_special_item_empty(Item),
+	remove_special_item_empty(T, Creencias_A, Creencias_New)
+	;
+	append(Creencias_A, [Item => Shelf], Creencias_B),
+	remove_special_item_empty(T, Creencias_B, Creencias_New).
 
 % verdad si el objecto aparece en creencias
 is_item_expected(Item, [Item => _|_]).
@@ -300,13 +302,11 @@ generate_shopkeeper_actions(Creencias, [Shelf|T], Location, Actions_A, Actions_N
 
 % returns true if the shopkeeper will visit the shelf during his routine,
 % that is, if the shopkeeper will place an item on that shelf
-will_visit_shelf([Item => Shelf|T], Shelf) :- 
-	not(is_special_item_empty(Item))
-	; will_visit_shelf(T, Shelf).
+%will_visit_shelf([Item => Shelf|T], Shelf) :- 
+	%not(is_special_item_empty(Item))
+	%; will_visit_shelf(T, Shelf).
+will_visit_shelf([_ => Shelf|_], Shelf).
 will_visit_shelf([_|T], Shelf) :- will_visit_shelf(T, Shelf).
-
-% true if we have a match with empty
-is_special_item_empty(empty).
 
 do_generate_actions([], _, Actions_New, Actions_New).
 do_generate_actions([Item => Shelf|T], Shelf, Actions_A, Actions_New) :-
