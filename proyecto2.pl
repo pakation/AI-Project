@@ -794,6 +794,8 @@ elimina_lista_objetos([NomObjeto|_],KB_Original,KB_Nuevo) :-
 % MÓDULO PLANEACIÓN
 %****************************************************************
 
+equal(A,A).
+
 %Función para regresar la reversa de una lista
 reverse([],[]).
 reverse([H|T],Z) :-
@@ -830,25 +832,31 @@ exists_in_shelf(Objeto, [Objeto=>Shelf_Objeto|_], Shelf_Objeto).
 exists_in_shelf(Objeto, [_|T], Shelf_Objeto):-
 	exists_in_shelf(Objeto, T, Shelf_Objeto).
 
-take_decision([reacomodar(Objeto)|_], Objeto):- write("\nObjeto a reacomodar: "), write(Objeto).
-take_decision([_|T], Objeto):-
-	take_decision(T, Objeto).
+take_decision([reacomodar(Objeto_Reacomodar)|_], Objeto_Reacomodar):- write(Objeto_Reacomodar).
+take_decision([_|T], Objeto_Reacomodar):-
+	take_decision(T, Objeto_Reacomodar).
 
-equal(a,b):- write(a), write("\n"), write(b).
+%Compara shelf actual con los demás reacomodos
+compare_shelves(Shelf_Objeto,  ShelfOriginal_Objeto, Objeto_Reacomodar, Decisiones, Diagnostico, KB_Original):- 
+	take_decision(Decisiones, Objeto_Reacomodar),
+	should_be_in_shelf(Objeto_Reacomodar, ShelfOriginal_Objeto, KB_Original).
 
-%Compara shelf de entrega con los demás reacomodos
-compare_shelves(Shelf_Objeto,  ShelfOriginal_Objeto, Decisiones, Diagnostico, KB_Original):- 
-	take_decision(Decisiones, Objeto),
-	should_be_in_shelf(Objeto, ShelfOriginal_Objeto, KB_Original),
-	write("\n"), write(Shelf_Objeto), write("\n"), write(ShelfOriginal_Objeto).
-
-bottom_up(Shelf_Objeto, Decisiones, Diagnostico, KB_Original):- 
-	compare_shelves(Shelf_Objeto, ShelfOriginal_Objeto, Decisiones, Diagnostico, KB_Original)
-	%equal(Shelf_Objeto, ShelfOriginal_Objeto),
+bottom_up(Shelf_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original):- 
+	write(Shelf_Objeto), nl,
+	compare_shelves(Shelf_Objeto, ShelfOriginal_Objeto, Objeto_Reacomodar, Decisiones, Diagnostico, KB_Original),
+	(
+		equal(Shelf_Objeto, ShelfOriginal_Objeto),
+		append(PlanRaw, [colocar(Objeto_Reacomodar)], PlanRaw1), 
+		append(PlanRaw1, [mover(ShelfOriginal_Objeto)], Plan),
+		write(ShelfOriginal_Objeto),
+		bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, Plan, Plan, KB_Original)
+		; 
+		write("no")
+	)
 	.
 
 planeacion(Decisiones, Diagnostico, PlanRaw, Plan, PosRobot, LeftArm, RightArm, KB_Original):-
 	deliver_obj(Decisiones, Objeto, PlanRaw, Plan1), 
 	exists_in_shelf(Objeto, Diagnostico, Shelf_Objeto),
-	bottom_up(Shelf_Objeto, Decisiones, Diagnostico, KB_Original),
-	reverse(Plan1,Plan).
+	bottom_up(Shelf_Objeto, Decisiones, Diagnostico, Plan1, Plan2, KB_Original),
+	reverse(Plan2,Plan).
