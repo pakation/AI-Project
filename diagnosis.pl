@@ -31,10 +31,12 @@ do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :-
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
 	% para esos objectos, generar listas de estantes donde cada objecto podría estar
 	generar_posibilidades(Creencias_Malos, Observaciones, Estantes, [], Posibilidades),
-	% combinar las posibilidades para generar explicaciones
-	generar_explicaciones(Posibilidades, [], [], Explicaciones),
-	% evaluar las explicaciones para eligir uno con menos error
-	eligir_explicacion(Creencias, Explicaciones, Eligido),
+	% choose an explanation
+	eligir_explicacion2(Creencias, Posibilidades, Eligido),
+	% % combinar las posibilidades para generar explicaciones
+	% generar_explicaciones(Posibilidades, [], [], Explicaciones),
+	% % evaluar las explicaciones para eligir uno con menos error
+	% eligir_explicacion(Creencias, Explicaciones, Eligido),
 	% combinar las creencias limpiados con la explicación eligido
 	append(Creencias_Limpios, Eligido, Creencias_B),
 	% si observe objectos que no apareció antes en creencias, agregarlos ahora
@@ -89,6 +91,9 @@ has_seen_shelf(Shelf, [_|T]) :- has_seen_shelf(Shelf, T).
 is_on_shelf(Item, Shelf, [Item => Shelf|_]).
 is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
+not_empty([_]).
+not_empty([_|_]).
+
 % For each item, generate a set of possible shelves that the item could 
 % possibly be
 generar_posibilidades([], _, _, Set_New, Set_New).
@@ -111,9 +116,6 @@ generar_posibilidades([Item|T], Obvs, Shelves, Set_A, Set_New) :-
 		generar_posibilidades(T, Obvs, Shelves, Set_A, Set_New)
 	).
 
-not_empty([_]).
-not_empty([_|_]).
-
 % Expand explanations, if they do not conflict with observations
 % Item, [Shelves], [Observations], [], >Explanations)
 do_generar_posibilidades(_, [], _, Expl_New, Expl_New).
@@ -129,35 +131,109 @@ do_generar_posibilidades(Item, [Shelf|T], Obvs, Expl_A, Expl_New) :-
 	do_generar_posibilidades(Item, T, Obvs, Expl_B, Expl_New)
 	.
 
+% Plan
+%	Select the first item
+%	See if another object can swap places with it
+%	If yes, then choose this swap and recurse
+%	If recursion says no, keep checking options
+%	If all options run out, just grab the last available best, fix it in
+%	place, and keep going
+eligir_explicacion2(Creencias, Posibilidades, Explicaciones) :-
+	find_swap2(Creencias, Posibilidades, [], Explicaciones).
+
+remove_from_others(_, [], Others_New, Others_New).
+remove_from_others(Item, [[]|T_2], Others, Others_New) :-
+	remove_from_others(Item, T_2, Others, Others_New).
+remove_from_others(Item, [[Item => _|_]|T_2], Others, Others_New) :-
+	remove_from_others(Item, T_2, Others, Others_New).
+remove_from_others(Item, [Set|T_2], Others, Others_New) :-
+	% not found
+	append(Others, [Set], Others_B),
+	remove_from_others(Item, T_2, Others_B, Others_New).
+
+find_swap2(_, [], Cadena_New, Cadena_New).
+find_swap2(Creencias, [[Item => Shelf|T]|T_2], Cadena_A, Cadena_New) :-
+	% load original shelf
+	is_on_shelf(Item, Shelf_Original, Creencias),
+	% find another item that can swap with this item
+	swap_exists(Creencias, Shelf_Original, Shelf, T_2, Item_Other),
+	% lock in this item
+	append(Cadena_A, [Item => Shelf], Cadena_B),
+	% lock in the other item
+	append(Cadena_B, [Item_Other => Shelf_Original], Cadena_C),
+	% remove other item from contention
+	remove_from_others(Item_Other, T_2, [], T_2_New),
+	% proceed to others
+	find_swap2(Creencias, T_2_New, Cadena_C, Cadena_New)
+	;
+	(
+		% look for swap in other position
+		find_swap2(Creencias, [T|T_2], Cadena_A, Cadena_New)
+		;
+		% lock in this item
+		append(Cadena_A, [Item => Shelf], Cadena_B),
+		% proceed to others
+		find_swap2(Creencias, T_2, Cadena_B, Cadena_New)
+	).
+
+% find_swap(Creencias, [Item => Shelf|T], Others, Others_New, Cadena_A, Cadena_New) :-
+% 	% load original shelf
+% 	is_on_shelf(Item, Shelf_Original, Creencias),
+% 	% find another item that can swap with this item
+% 	swap_exists(Creencias, Shelf_Original, Shelf, Others, Item_Other),
+% 	% lock in this item
+% 	append(Cadena_A, [Item => Shelf], Cadena_B),
+% 	% lock in the other item
+% 	append(Cadena_B, [Item_Other => Shelf_Original], Cadena_New),
+% 	% remove other item from contention
+% 	remove_from_others(Item_Other, Others, [], Others_New)
+% 	;
+% 	(
+% 		% look for swap in other position
+% 		find_swap(Creencias, T, Others, Others_New, Cadena_A, Cadena_New)
+% 		;
+% 		% lock in this item
+% 		append(Cadena_A, [Item => Shelf], Cadena_New),
+% 		Others_New = Others
+% 	).
+
+% if there exists an item Shelf that used to be on Shelf_Original
+swap_exists(Creencias, Shelf, Shelf_Original, [[]|T_2], Item) :- swap_exists(Creencias, Shelf, Shelf_Original, T_2, Item).
+swap_exists(Creencias, Shelf, Shelf_Original, [[Item => Shelf|_]|T_2], Item) :-
+	is_on_shelf(Item, Shelf_Original, Creencias)
+	; swap_exists(Creencias, Shelf, Shelf_Original, T_2, Item).
+swap_exists(Creencias, Shelf, Shelf_Original, [[_|T]|T_2], Item) :- swap_exists(Creencias, Shelf, Shelf_Original, [T|T_2], Item).
+
+
 % given a 2d array of posibilities, expand it into a flat 1d array of
 % all permutations. So [[1,2],[3,4]] should turn into [[1,3],[1,4],[2,3],2,4]]
-generar_explicaciones([], Cadena, Results_A, Results_New) :-
-	append(Results_A, [Cadena], Results_New).
-% case where there are no posibilities for an item
-generar_explicaciones([[]], _, Results_New, Results_New).
-generar_explicaciones([[]|_], _, Results_New, Results_New).
-generar_explicaciones([[Item => Shelf|T]|T_2], Cadena_A, Results_A, Results_New) :-
-	append(Cadena_A, [Item => Shelf], Cadena_B),
-	generar_explicaciones(T_2, Cadena_B, Results_A, Results_B),
-	generar_explicaciones([T|T_2], Cadena_A, Results_B, Results_New).
+% generar_explicaciones([], Cadena, Results_A, Results_New) :-
+% 	append(Results_A, [Cadena], Results_New).
+% % case where there are no posibilities for an item
+% generar_explicaciones([[]], _, Results_New, Results_New).
+% generar_explicaciones([[]|_], _, Results_New, Results_New).
+% generar_explicaciones([[Item => Shelf|T]|T_2], Cadena_A, Results_A, Results_New) :-
+% 	append(Cadena_A, [Item => Shelf], Cadena_B),
+% 	generar_explicaciones(T_2, Cadena_B, Results_A, Results_B),
+% 	generar_explicaciones([T|T_2], Cadena_A, Results_B, Results_New).
 
 % choose an explanation given a set of explanations
-eligir_explicacion(_, [Item => Shelf], [Item => Shelf]). % Explanation with only one option, always choose that option
-eligir_explicacion(Creencias, Explicaciones, Eligido) :-
-	do_eligir_explicacion(Creencias, Explicaciones, _, Eligido, 999999, _).
-
-% compute the delta between this explanation and the ideal or expected
-% and select the option with minimum delta
-do_eligir_explicacion(_, [], Eligido_New, Eligido_New, Min_New, Min_New).
-do_eligir_explicacion(Creencias, [Explicacion|T], Eligido, Eligido_New, Min, Min_New) :-
-	% Look for shelf count discrepancies
-	delta_count(Creencias, Explicacion, Result),
-	(Result @< Min),
-	% If this solution has less of a discrepancy
-	do_eligir_explicacion(Creencias, T, Explicacion, Eligido_New, Result, Min_New)
-	;
-	% If this solution has more of a discrepancy
-	do_eligir_explicacion(Creencias, T, Eligido, Eligido_New, Min, Min_New).
+% eligir_explicacion(_, [Item => Shelf], [Item => Shelf]). % Explanation with only one option, always choose that option
+% eligir_explicacion(Creencias, Explicaciones, Eligido) :-
+% 	do_eligir_explicacion(Creencias, Explicaciones, _, Eligido, 999999, _).
+% 
+% % compute the delta between this explanation and the ideal or expected
+% % and select the option with minimum delta
+% do_eligir_explicacion(_, [], Eligido_New, Eligido_New, Min_New, Min_New).
+% do_eligir_explicacion(Creencias, [Explicacion|T], Eligido, Eligido_New, Min, Min_New) :-
+% 	% Look for shelf count discrepancies
+% 	delta_count(Creencias, Explicacion, Result),
+% 	(Result @< Min),
+% 	% If this solution has less of a discrepancy
+% 	do_eligir_explicacion(Creencias, T, Explicacion, Eligido_New, Result, Min_New)
+% 	;
+% 	% If this solution has more of a discrepancy
+% 	do_eligir_explicacion(Creencias, T, Eligido, Eligido_New, Min, Min_New).
 
 %*************
 % Delta count
