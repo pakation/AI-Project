@@ -2,58 +2,58 @@ A)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [refresco=>shelf1,cerveza=>shelf1,sopa=>shelf2,galletas=>shelf3],
 Asistente_Actividades = [mover(l0,shelf1),colocar(refresco),colocar(cerveza),mover(shelf1,shelf2),colocar(sopa),mover(shelf2,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente)] .
+Decision_robot = [entregar(refresco)] .
 
 B)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [refresco=>shelf1,cerveza=>shelf1,galletas=>shelf3,sopa=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(refresco),colocar(cerveza),colocar(sopa),mover(shelf1,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa)] .
 
 C)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [refresco=>shelf1,cerveza=>shelf1,sopa=>shelf1,galletas=>shelf1,cereal=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(refresco),colocar(cerveza),colocar(sopa),colocar(galletas),colocar(cereal)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2),reacomodar(robot,cereal,shelf2),reacomodar(robot,galletas,shelf3)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa),reacomodar(cereal),reacomodar(galletas)] .
 
 D)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [cerveza=>shelf1,galletas=>shelf3,refresco=>shelf2,sopa=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(cerveza),colocar(sopa),mover(shelf1,shelf2),colocar(refresco),mover(shelf2,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa)] .
 
 E)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [cerveza=>shelf1,galletas=>shelf3,refresco=>shelf2,sopa=>shelf1,cereal=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(cerveza),colocar(sopa),colocar(cereal),mover(shelf1,shelf2),colocar(refresco),mover(shelf2,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2),reacomodar(robot,cereal,shelf2)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa),reacomodar(cereal)] .
 
 F) sacó el caso empty
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [sopa=>shelf2,galletas=>shelf3,refresco=>shelf2,cerveza=>shelf2,empty=>shelf1],
 Asistente_Actividades = [mover(l0,shelf2),colocar(sopa),colocar(refresco),colocar(cerveza),mover(shelf2,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,cerveza,shelf1)] .
+Decision_robot = [entregar(refresco),reacomodar(cerveza)] .
 
 G)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [refresco=>shelf2,cerveza=>shelf3,sopa=>shelf1,galletas=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(sopa),colocar(galletas),mover(shelf1,shelf2),colocar(refresco),mover(shelf2,shelf3),colocar(cerveza)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2),reacomodar(robot,cerveza,shelf1),reacomodar(robot,galletas,shelf3)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa),reacomodar(cerveza),reacomodar(galletas)] .
 
-H) Porque no pesó que refresco pudo haberlo confundido con galletas
+H) Porque no pensó que refresco pudo haberlo confundido con galletas
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [sopa=>shelf2,refresco=>shelf2,cerveza=>shelf3,galletas=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(galletas),mover(shelf1,shelf2),colocar(sopa),colocar(refresco),mover(shelf2,shelf3),colocar(cerveza)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,cerveza,shelf1),reacomodar(robot,galletas,shelf3)] 
+Decision_robot = [entregar(refresco),reacomodar(cerveza),reacomodar(galletas)] 
 
 I)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [galletas=>shelf3,refresco=>shelf2,cerveza=>shelf2,sopa=>shelf1,cereal=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(sopa),colocar(cereal),mover(shelf1,shelf2),colocar(refresco),colocar(cerveza),mover(shelf2,shelf3),colocar(galletas)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2),reacomodar(robot,cereal,shelf2),reacomodar(robot,cerveza,shelf1)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa),reacomodar(cereal),reacomodar(cerveza)] .
 
 J)
 diagnosis(Diagnostico,Asistente_Actividades),decision(Diagnostico,Decision_robot).
 Diagnostico = [cerveza=>shelf1,refresco=>shelf2,sopa=>shelf1,galletas=>shelf1,cereal=>shelf1],
 Asistente_Actividades = [mover(l0,shelf1),colocar(cerveza),colocar(sopa),colocar(galletas),colocar(cereal),mover(shelf1,shelf2),colocar(refresco)],
-Decision_robot = [entregar(robot,refresco,cliente),reacomodar(robot,sopa,shelf2),reacomodar(robot,cereal,shelf2),reacomodar(robot,galletas,shelf3)] .
+Decision_robot = [entregar(refresco),reacomodar(sopa),reacomodar(cereal),reacomodar(galletas)] .
