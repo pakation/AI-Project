@@ -1,40 +1,52 @@
 :- ensure_loaded(proyecto1).
 :- op(800,xfx,'=>').
 
-% TODO if the explanation is 'perfect', take it right away
-
-% cases handled
-%	new item
-%	location contradiction
-%	location contradiction such that item cannot possibly be anywhere
-%	no contradictions
+% TODO more efficient diagnosis
 %
 % TODO if the item that appeared in Observations is not known in the kb,
 % do not add it to creencias
 %
-% TODO deal with observations where shelf is totally empty 
-% (have caller inject a special "empty => s1" item without it being 
-% considered as product?)
+% TODO clean "empty" from Creencias if exists so that it doesn't interfere
+% with items-per-shelf count
+%
+% TODO consider, while generating, counting the number of 'wrong' objects
+% per shelf and if it exceeds the current minimum, throwing away all further
+% posibilities? (only works for positive numbers of wrong objects)
 
+% Punto de entrada
+%
+%****************************************************************
+% Diagnóstico
+%
+% Usage: diagnosis(KB, Creencias_New, Acciones)
+%****************************************************************
 diagnosis(KB, Creencias_New, Acciones) :-
-	rels_inst(report, Creencias, KB),
-	rels_inst(observations, Observaciones, KB),
-	extension_class(shelves, Estantes, KB),
+	rels_inst(report, Creencias, KB), % cargar creencias desde el KB
+	rels_inst(observations, Observaciones, KB), % cargar observaciones desde el KB
+	extension_class(shelves, Estantes, KB), % cargar lista de estantes desde el KB
 	do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones).
 
-% Creencias, creencias nuevos, observaciones, acciones
 do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :- 
+	% sacar objectos que generan contraditiones
 	remove_inconsistencies(Creencias, Observaciones, [], Creencias_Malos, [], Creencias_Limpios),
+	% para esos objectos, generar listas de estantes donde cada objecto podría estar
 	generar_posibilidades(Creencias_Malos, Observaciones, Estantes, [], Posibilidades),
+	% combinar las posibilidades para generar explicaciones
 	generar_explicaciones(Posibilidades, [], [], Explicaciones),
+	% evaluar las explicaciones para eligir uno con menos error
 	eligir_explicacion(Creencias, Explicaciones, Eligido),
+	% combinar las creencias limpiados con la explicación eligido
 	append(Creencias_Limpios, Eligido, Creencias_B),
+	% si observe objectos que no apareció antes en creencias, agregarlos ahora
 	new_obsv_to_creencias(Creencias_B, Observaciones, Creencias_New),
+	% generar los acciones que el asistente hizo para hacerlo real la nueva creencia
 	generate_shopkeeper_actions(Creencias_New, Estantes, l0, [], Acciones).
 
+% verdad si el objecto aparece en creencias
 is_item_expected(Item, [Item => _|_]).
 is_item_expected(Item, [_|T]) :- is_item_expected(Item, T).
 
+% convierte un objecto nunca visto antes a una creencia
 new_obsv_to_creencias(Creencias_New, [], Creencias_New).
 new_obsv_to_creencias(Creencias, [Item => Shelf|T], Creencias_New):-
 	not(is_item_expected(Item, Creencias)),
@@ -55,7 +67,6 @@ do_contradicts_obs(Item, Shelf, [_|T], Seen_Shelf, Seen_Shelf_New) :- do_contrad
 
 % Strip out bad creencias
 remove_inconsistencies([], _, Creencias_Malos, Creencias_Malos, Creencias_New, Creencias_New).
-% for each item
 remove_inconsistencies([Item => Shelf|T], Obvs, Creencias_Malos_A, Creencias_Malos, Creencias_A, Creencias_New) :-
 	% if the observations do not disagree with where the item is supposed to be
 	contradicts_obs(Item, Shelf, Obvs),
@@ -70,18 +81,11 @@ remove_inconsistencies([Item => Shelf|T], Obvs, Creencias_Malos_A, Creencias_Mal
 	remove_inconsistencies(T, Obvs, Creencias_Malos_A, Creencias_Malos, Creencias_B, Creencias_New)
 	.
 
-% true if every shelf has been seen, false otherwise
-% has_seen_all_shelves([], Obvs).
-% has_seen_all_shelves([Shelf|T], Obvs) :-
-% 	has_seen_shelf(Shelf, Obvs),
-% 	has_seen_all_shelves(T, Obvs)
-% 	;
-% 	false.
-
 % true if the robot has seen the given shelf, false otherwise
 has_seen_shelf(Shelf, [_ => Shelf|_]).
 has_seen_shelf(Shelf, [_|T]) :- has_seen_shelf(Shelf, T).
 
+% verdad si el objecto está en un estante específico
 is_on_shelf(Item, Shelf, [Item => Shelf|_]).
 is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
@@ -89,16 +93,21 @@ is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 % possibly be
 generar_posibilidades([], _, _, Set_New, Set_New).
 generar_posibilidades([Item|T], Obvs, Shelves, Set_A, Set_New) :-
-	is_on_shelf(Item, Shelf, Obvs), % if it's on the shelf we have a perfect correction
+	is_on_shelf(Item, Shelf, Obvs), 
+	% if it's on the shelf we have a perfect correction
 	append(Set_A, [[Item => Shelf]], Set_B),
 	generar_posibilidades(T, Obvs, Shelves, Set_B, Set_New)
-	; 
-	do_generar_posibilidades(Item, Shelves, Obvs, [], Set), % if not, generate all possible corrections
+	;
+	% if not, generate all possible corrections 
+	do_generar_posibilidades(Item, Shelves, Obvs, [], Set), 
 	(
+		% if we generated at least one posibility
 		not_empty(Set),
+		% add it
 		append(Set_A, [Set], Set_B),
 		generar_posibilidades(T, Obvs, Shelves, Set_B, Set_New)
 		;
+		% otherwise it's not possible for this item to be on any shelf, so skip it
 		generar_posibilidades(T, Obvs, Shelves, Set_A, Set_New)
 	).
 
@@ -150,8 +159,13 @@ do_eligir_explicacion(Creencias, [Explicacion|T], Eligido, Eligido_New, Min, Min
 	% If this solution has more of a discrepancy
 	do_eligir_explicacion(Creencias, T, Eligido, Eligido_New, Min, Min_New).
 
+%*************
 % Delta count
-% TODO prove that this is is OK for all cases
+%
+% Returns the difference, in number of objects, of the given diagnosis to
+% what the robot belives is true in terms of number of objects per shelf
+%************
+
 update_shelf(Shelf, Amount, [], [Shelf => Amount]).
 update_shelf(Shelf, Amount, [Shelf => Count|T], [Shelf => Count_New|T]) :- 
 	Count_New is Count + Amount.
@@ -191,11 +205,18 @@ do_aplicar_explicacion(Item, Shelf, [Item => _|T], [Item => Shelf_Old|T]) :-
 do_aplicar_explicacion(Item, Shelf, [H|T], [H|T_New]) :-
 	do_aplicar_explicacion(Item, Shelf, T, T_New).
 
+%******************************
+% Generate shopkeeper actions
+%******************************
+
 % generates actions that the shopkeeper takes to fill the scenario in creencias
 generate_shopkeeper_actions(_, [], _, Actions_New, Actions_New).
 generate_shopkeeper_actions(Creencias, [Shelf|T], Location, Actions_A, Actions_New) :-
+	% for each shelf
 	will_visit_shelf(Creencias, Shelf),
+	% append a movement action
 	append(Actions_A, [mover(Location, Shelf)], Actions_B),
+	% append all posible placement actions
 	do_generate_actions(Creencias, Shelf, Actions_B, Actions_C),
 	generate_shopkeeper_actions(Creencias, T, Shelf, Actions_C, Actions_New)
 	;
@@ -213,11 +234,13 @@ is_special_item_empty(empty).
 
 do_generate_actions([], _, Actions_New, Actions_New).
 do_generate_actions([Item => Shelf|T], Shelf, Actions_A, Actions_New) :-
+	% for each shelf
 	not(is_special_item_empty(Item)),
-	% do not append "empty" to the actions
+	% append a placement action
 	append(Actions_A, [colocar(Item)], Actions_B),
 	do_generate_actions(T, Shelf, Actions_B, Actions_New)
 	;
+	% do not append "empty" to the actions
 	do_generate_actions(T, Shelf, Actions_A, Actions_New).
 do_generate_actions([_|T], Shelf, Actions_A, Actions_New) :-
 	do_generate_actions(T, Shelf, Actions_A, Actions_New).
