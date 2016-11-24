@@ -261,7 +261,7 @@ decision(KB,Diagnostico,Actividades):-extension_class(pending_activities,Entrega
 									  verifica_actividades(Act,Entregas_pendientes,Lista_act),
 									  concat_actividades(Entregas_pendientes,Lista_act,Actividades),!.
 
-%*****************************************************************************
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elimina_elemento_r([], Lista, Lista).
 elimina_elemento_r(Elemento, [Elemento|T], T).
 elimina_elemento_r(Elemento, [H|T], [H|R]) :- elimina_elemento_r(Elemento, T,R).
@@ -324,7 +324,8 @@ obtiene_mejor_solucion(Umbral,Entregas_pendientes,Reacomodos,Lista_salida):-veri
 					append(Lista_Puntu_Raiz,Lista_Puntu_Nivel,Lista_salida).
 
 
-%*****************************************************************************
+
+%*********
 partes(L1,L2) :-
 findall(Y,subconjunto(Y,L1),L2).
 
@@ -356,7 +357,7 @@ permuta([],[]).
 permuta([X|Xs],Ys):- permuta(Xs,Zs), inserta(X,Zs,Ys).
 inserta(X,L,[X|L]).
 inserta(X,[Y|Ys],[Y|Ys1]):- inserta(X,Ys,Ys1).
-%*****************************************************************************
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Si existe la funcion reacomodar y entregar al cliente de un mismo producto,
 %se elimina la actividad reacomodar.														  
