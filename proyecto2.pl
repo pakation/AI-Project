@@ -11,6 +11,8 @@
 %*Knowledge-Base for Service Robots"                            *
 %****************************************************************
 
+:- ensure_loaded(puntuacion).
+
 %****************************************************************
 % Carga y lectura de la base de conocimiento
 %****************************************************************
@@ -815,7 +817,7 @@ deliver_obj([_|T], Objeto, PlanRaw, Plan):-
 find_shelf_inner(Clase,[class(Clase,_,_,[Clase=>ShelfOriginal_Objeto],_)|_], ShelfOriginal_Objeto).
 find_shelf_inner(Clase, [_|T], ShelfOriginal_Objeto):-
 	find_shelf_inner(Clase, T, ShelfOriginal_Objeto).
-find_shelf_inner(_, _, _).
+find_shelf_inner(_, [], _).
 
 find_shelf([Clase|R], KB_Original, ShelfOriginal_Objeto):- 
     find_shelf_inner(Clase,KB_Original, ShelfOriginal_Objeto),
@@ -848,15 +850,24 @@ bottom_up(Shelf_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original):-
 	take_decision(KB_Original, Shelf_Objeto, Decisiones, Objeto_Reacomodar),
 	append(PlanRaw, [colocar(Objeto_Reacomodar)], PlanRaw1), 
 	exists_in_shelf(Objeto_Reacomodar, Diagnostico, ShelfOriginal_Objeto),
-	append(PlanRaw1, [mover(ShelfOriginal_Objeto)], PlanRaw2).
-	% TODO borrar Object_Reacomodar de Decisiones
+	append(PlanRaw1, [mover(Shelf_Objeto)], Plan),
+	remove(Objeto_Reacomodar, Decisiones, [], Decisiones_New)
 	%bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, PlanRaw2, Plan, KB_Original)
-	%; 
-	%(
-	%	% TODO buscar reacomadar
-	%	%;
-	%	bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original)
-	%).
+	; 
+	(
+		% TODO buscar reacomadar
+		eligir_proximo_objecto(KB_Original, Diagnostico, Shelf_Objeto, Decisiones, Mejor_Obj, Mejor_Shelf, Mejor_Punt),
+		write(Mejor_Obj)
+		;
+		bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original)
+	).
+
+remove(_, [], Decisiones_New, Decisiones_New).
+remove(Objeto, [reacomodar(Objeto)|T], Decisiones_A, Decisiones_New):- 
+	remove(Objeto, T, Decisiones_A, Decisiones_New).
+remove(Objeto, [H|T], Decisiones_A, Decisiones_New):-
+	append(Decisiones_A, H, Decisiones_B),
+	remove(Objeto, T, Decisiones_B, Decisiones_New).
 
 planeacion(Decisiones, Diagnostico, PlanRaw, Plan, PosRobot, LeftArm, RightArm, KB_Original):-
 	deliver_obj(Decisiones, Objeto, PlanRaw, Plan1), 
