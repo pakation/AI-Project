@@ -850,16 +850,15 @@ bottom_up(Shelf_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original):-
 	take_decision(KB_Original, Shelf_Objeto, Decisiones, Objeto_Reacomodar),
 	append(PlanRaw, [colocar(Objeto_Reacomodar)], PlanRaw1), 
 	exists_in_shelf(Objeto_Reacomodar, Diagnostico, ShelfOriginal_Objeto),
-	append(PlanRaw1, [mover(Shelf_Objeto)], Plan),
-	remove(Objeto_Reacomodar, Decisiones, [], Decisiones_New)
-	%bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, PlanRaw2, Plan, KB_Original)
+	append(PlanRaw1, [mover(Shelf_Objeto)], PlanRaw2),
+	remove(Objeto_Reacomodar, Decisiones, [], Decisiones_New),
+	bottom_up(ShelfOriginal_Objeto, Decisiones_New, Diagnostico, PlanRaw2, Plan, KB_Original)
 	; 
 	(
-		% TODO buscar reacomadar
-		eligir_proximo_objecto(KB_Original, Diagnostico, Shelf_Objeto, Decisiones, Mejor_Obj, Mejor_Shelf, Mejor_Punt),
-		write(Mejor_Obj)
+		eligir_proximo_objecto(KB_Original, Diagnostico, Shelf_Objeto, Decisiones, Mejor_Obj, Mejor_Shelf, Mejor_Punt)
 		;
-		bottom_up(ShelfOriginal_Objeto, Decisiones, Diagnostico, PlanRaw, Plan, KB_Original)
+		% TODO wrap up the final tasks
+		bottom_up(ShelfOriginal_Objeto, [], Diagnostico, PlanRaw, Plan, KB_Original)
 	).
 
 remove(_, [], Decisiones_New, Decisiones_New).
@@ -873,5 +872,6 @@ planeacion(Decisiones, Diagnostico, PlanRaw, Plan, PosRobot, LeftArm, RightArm, 
 	deliver_obj(Decisiones, Objeto, PlanRaw, Plan1), 
 	exists_in_shelf(Objeto, Diagnostico, Shelf_Objeto),
 	bottom_up(Shelf_Objeto, Decisiones, Diagnostico, Plan1, Plan2, KB_Original),
-	reverse(Plan2,Plan).
+	reverse(Plan2,Plan),
 	% TODO manda a calificar puntuacion
+	evaluar(KB_Original, PosRobot, Plan, Puntos_Nuevo).

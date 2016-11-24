@@ -1,4 +1,4 @@
-:- ensure_loaded(proyecto1).
+%:- ensure_loaded(proyecto1).
 
 % Usage: open_kb("KB_Store_Ejemplo_Arturo.txt", KB), eligir_proximo_objecto(KB, [coke=>shelf2,heineken=>shelf3], shelf1, [coke,heineken], Item, Shelf, Cost).
 
