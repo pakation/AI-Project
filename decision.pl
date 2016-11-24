@@ -1,19 +1,19 @@
 %****************************************************************
-%*PROYECTO    : PROYECTO DE BÚSQUEDA                            *
+%*PROYECTO    : PROYECTO DE BÃšSQUEDA                            *
 %*INTEGRANTES : Cheung Derek                                    *
-%*              González Rico Diana Virginia                    *
-%*              Neri González José Francisco                    *
+%*              GonzÃ¡lez Rico Diana Virginia                    *
+%*              Neri GonzÃ¡lez JosÃ© Francisco                    *
 %*FECHA       : 24/Noviembre/2016                               *
-%*DESCRIPCIÓN : Un robot de servicio opera como asistente en un *
-%supermercado, utilizando módulo de inferencia oportunista, que *
-%implica realizar un diagnóstico, una toma de decisión y una    *
-%planeación.                                                    *
+%*DESCRIPCIÃ“N : Un robot de servicio opera como asistente en un *
+%supermercado, utilizando mÃ³dulo de inferencia oportunista, que *
+%implica realizar un diagnÃ³stico, una toma de decisiÃ³n y una    *
+%planeaciÃ³n.                                                    *
 %****************************************************************
 
 %****************************************************************
-% MÓDULO DE TOMA DE DECISIÓN
+% MÃ“DULO DE TOMA DE DECISIÃ“N
 %****************************************************************
-%Leer el diagnostico generado en el Módulo de diagnostico
+%Leer el diagnostico generado en el MÃ³dulo de diagnostico
 %Por ejemplo:
 %[maruchan=>shelf1,heineken=>shelf1,coke=>shelf2,marias=>shelf3]
 
@@ -24,10 +24,10 @@
 
 %Comparar cada elemento del diagnostico con cada elemento del mundo ideal. En caso, de que haya inconsistencias
 %se debe generar por cada elemento un reacomodo por parte del robot. Evaluar que acciones son prioritarias
-%para generar una toma de decisión y generar posteriormente un plan.
+%para generar una toma de decisiÃ³n y generar posteriormente un plan.
 
 %Toma de decision
-%Diagnostico: Proviene del módulo de Dianóstico.
+%Diagnostico: Proviene del mÃ³dulo de DianÃ³stico.
 %Entregas_pendientes: Solicitudes que realiza el cliente al robot.
 %Actividades: Actvidades que decide el robot por ejecutar.
 decision(KB,PosRobot,Diagnostico,Actividades):-extension_class(pending_activities,Entregas_pendientes,KB),
@@ -70,105 +70,6 @@ eligir_reacomoda(KB, Diagnostico, PosRobot, Set, [Item => Shelf|T], High, High_N
 %%%%%%
 % End New
 %%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-elimina_elemento_r([], Lista, Lista).
-elimina_elemento_r(Elemento, [Elemento|T], T).
-elimina_elemento_r(Elemento, [H|T], [H|R]) :- elimina_elemento_r(Elemento, T,R).
-
-%Elimina una lista de reacomodos de la lista original (Reacomodos Padre,Reacomodo_Original,Lista)
-elimina_reacomodos([],Lista,Lista).
-elimina_reacomodos([H|T],Lista_reacomodos,Lista_nueva):- elimina_elemento_r(H,Lista_reacomodos,Lista_A),write(T),write(Lista_A),
-														 elimina_reacomodos(T,Lista_A,Lista_nueva),!.
-														 
-%Obtener los reacomodos de una lista de tareas combinadas
-verifica_si_es_reacomodo([],[]).
-verifica_si_es_reacomodo(entregar(_),Lista):- append([],[],Lista).
-verifica_si_es_reacomodo(reacomodar(Producto),Lista):- append([],[reacomodar(Producto)],Lista).
-obtiene_reacomodos_comb([],[]).
-obtiene_reacomodos_comb([H|T],Lista):-verifica_si_es_reacomodo(H,Lista_A),write(T),obtiene_reacomodos_comb(T,Lista_B),
-									  append(Lista_A,Lista_B,Lista).
-
-
-%Genera una lista de reacomodos
-genera_combinacion_reacomodos(Reacomodos,Lista_reacomodos):- combinaciones(Reacomodos,1,Lista_reacomodos).
-
-concatena_entrega_reacomodos([_|_],[],[]).
-concatena_entrega_reacomodos(Entrega,[H|T],Lista):-append(Entrega,H,Lista_A),concatena_entrega_reacomodos(Entrega,T,Lista_B),
-												   append([Lista_A],Lista_B,Lista),!.
-
-genera_combinacion_entrega_reacomodos(Entrega,List_reacomodos,Nivel):-genera_combinacion_reacomodos(List_reacomodos,Lista),
-																	  concatena_entrega_reacomodos(Entrega,Lista,Nivel).
-
-%Valida la primera entrega 
-verifica_puntuacion([entregar(refresco)],10).
-verifica_puntuacion([entregar(cerveza)],20).
-verifica_puntuacion([entregar(sopa)],40).
-verifica_puntuacion([entregar(galletas)],15).
-verifica_puntuacion([entregar(refresco),reacomodar(sopa)],32).
-verifica_puntuacion([entregar(refresco),reacomodar(cerveza)],45).
-verifica_puntuacion([entregar(refresco),reacomodar(galletas)],36).
-verifica_puntuacion([entregar(refresco),reacomodar(cerveza),reacomodar(sopa)],80).
-
-obtiene_puntuacion_nivel(Entrega,Puntuacion):- verifica_puntuacion(Entrega,Puntuacion).
-
-%Verifica si una lista de actividades está dentro del umbral. Si es correcto, regresa la lista con su puntuacion, de lo contrario, regresa lista vacia.
-comprueba_umbral(Umbral,Puntuacion):- Puntuacion < Umbral.
-verifica_actividades_en_umbral(Umbral,Actividades,Lista):- (obtiene_puntuacion_nivel(Actividades,Puntuacion),
-														     comprueba_umbral(Umbral,Puntuacion), append([Actividades => Puntuacion],[],Lista)) ; 
-															 append([],[],Lista).
-															 
-%verifica_actividades_u(Umbral,Actividad,Lista):- verifica_actividades_en_umbral(Umbral,Actividad,Lista).
-
-generar_nivel(Padre,List_reacomodos,Nivel):- genera_combinacion_entrega_reacomodos(Padre,List_reacomodos,Nivel).
-
-
-obtiene_lista_actividades_y_puntuaciones(_,[],[]).
-obtiene_lista_actividades_y_puntuaciones(Umbral,[H|T],Lista):- verifica_actividades_en_umbral(Umbral,H,Lista_A),
-															   obtiene_lista_actividades_y_puntuaciones(Umbral,T,Lista_B),
-															   append(Lista_A,Lista_B,Lista),!.
-%%%%%Aqui mando la entrega y recomodos
-%%%%
-%ejecutar  --> obtiene_mejor_solucion(50,[entregar(refresco)],[reacomodar(sopa),reacomodar(cerveza),reacomodar(galletas)],Lista).
-obtiene_mejor_solucion(Umbral,Entregas_pendientes,Reacomodos,Lista_salida):-verifica_actividades_en_umbral(Umbral,Entregas_pendientes,Lista_Puntu_Raiz),write(Lista_Puntu_Raiz),
-					generar_nivel(Entregas_pendientes,Reacomodos,Nivel),obtiene_lista_actividades_y_puntuaciones(Umbral,Nivel,Lista_Puntu_Nivel),
-					append(Lista_Puntu_Raiz,Lista_Puntu_Nivel,Lista_salida).
-
-
-
-%*********
-partes(L1,L2) :-
-findall(Y,subconjunto(Y,L1),L2).
-
-subconjunto([],[]).
-subconjunto([X|L1],[X|L2]) :- subconjunto(L1,L2).
-subconjunto(L1,[_|L2]) :-
-subconjunto(L1,L2).
-
-combinacion(L1,N,L2) :-
-combinacion_2(L1,N,L2).
-combinacion_1(L1,N,L2) :-
-subconjunto(L2,L1),
-length(L2,N).
-combinacion_2(L1,N,L2) :-
-length(L2,N),
-subconjunto(L2,L1).
-
-
-combinaciones(L1,N,L2) :-
-combinaciones_2(L1,N,L2).
-
-combinaciones_1(L1,N,L2) :-
-findall(L,combinacion_1(L1,N,L),L2).
-
-combinaciones_2(L1,N,L2) :-
-findall(L,combinacion_2(L1,N,L),L2).
-
-permuta([],[]).
-permuta([X|Xs],Ys):- permuta(Xs,Zs), inserta(X,Zs,Ys).
-inserta(X,L,[X|L]).
-inserta(X,[Y|Ys],[Y|Ys1]):- inserta(X,Ys,Ys1).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Si existe la funcion reacomodar y entregar al cliente de un mismo producto,
 %se elimina la actividad reacomodar.														  
@@ -217,14 +118,14 @@ obtiene_productos(KB, Productos):-extension_class(comestible,Productos,KB),!.
 cambia_valor(Producto, Clase, [Clase => Shelf|T], [Producto => Shelf|T]).
 cambia_valor(Producto, Clase, [H|T], [H|R]) :- actualiza_valor(Producto, Clase, T,R).
 
-%Verifica que un producto esté en el shelf correcto. Si está bien acomodado regresa Lista vacia, de lo contrario, regresa el shelf donde debe estar
+%Verifica que un producto estÃ© en el shelf correcto. Si estÃ¡ bien acomodado regresa Lista vacia, de lo contrario, regresa el shelf donde debe estar
 %acomodado.
-verif_shelf(_ => _,[],Lista):- append([],[],Lista). %El producto no está aún acomododado en los shelfs.
-verif_shelf(Producto => Shelf,[Producto => Shelf|_],Lista):- append([],[],Lista). %Está el producto en el shelf correcto.
+verif_shelf(_ => _,[],Lista):- append([],[],Lista). %El producto no estÃ¡ aÃºn acomododado en los shelfs.
+verif_shelf(Producto => Shelf,[Producto => Shelf|_],Lista):- append([],[],Lista). %EstÃ¡ el producto en el shelf correcto.
 verif_shelf(Producto => Shelf,[Producto => _|_],Lista):- append([Producto => Shelf],[],Lista).%Esta el producto en shelf incorrecto
 verif_shelf(Producto => Shelf,[_|T],Lista) :- verif_shelf(Producto => Shelf,T,Lista).
 
-%Verifica que los productos del diagnostico estén en el shelf del mundo real(KB).
+%Verifica que los productos del diagnostico estÃ©n en el shelf del mundo real(KB).
 %verif_lista_shelfs(Shelfs_Mundo_Real,Diagnostico,Productos_por_acomodar)
 verif_lista_shelfs([],_,[]).
 verif_lista_shelfs([H|T],L,Lista_Nueva):- verif_shelf(H,L,Lista_A),verif_lista_shelfs(T,L,Lista_B),append(Lista_A,Lista_B,Lista_Nueva),!.
