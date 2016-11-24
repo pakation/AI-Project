@@ -257,9 +257,48 @@ do_generate_actions(T, Shelf, Actions_A, Actions_New).
 %Actividades: Actvidades que decide el robot por ejecutar.
 decision([],[]).
 decision(KB,Diagnostico,Actividades):-extension_class(pending_activities,Entregas_pendientes,KB),
-									  productos_a_reacomodar(Diagnostico,Reacomodar),lista_de_actividades(Reacomodar,Act),
-									  verifica_actividades(Act,Entregas_pendientes,Lista_act),
-									  concat_actividades(Entregas_pendientes,Lista_act,Actividades),!.
+									  productos_a_reacomodar(KB, Diagnostico,Reacomodar),
+									  eligir_conjunto(5000, Entregas_pendientes, Reacomodar, Actividades).
+									  % lista_de_actividades(Reacomodar,Act),
+									  % verifica_actividades(Act,Entregas_pendientes,Lista_act),
+									  % concat_actividades(Entregas_pendientes,Lista_act,Actividades),!.
+
+%%%%%%
+% New
+%%%%%%
+
+remove_generic(_, [], Set_New, Set_New).
+remove_generic(Target, [Target|T], Set_A, Set_New):- 
+	remove_generic(Objeto, T, Set_A, Set_New).
+remove_generic(Objeto, [H|T], Set_A, Set_New):-
+	append(Set_A, [H], Set_B),
+	remove_generic(Objeto, T, Set_B, Set_New).
+
+eligir_conjunto(_, Set_New, [], Set_New).
+eligir_conjunto(Umbral, Set, Reacomodas, Set_New) :-
+	eligir_reacomoda(Set, Reacomodas, 0, High_New, _, [Item => Shelf]),
+	(
+		(High_New @> Umbral),
+		% force stop
+		eligir_conjunto(Umbral, Set, [], Set_New)
+		;
+		append(Set, [reacomodar(Item)], Set_B),
+		remove_generic(Item => Shelf, Reacomodas, [], Reacomodas_B),
+		eligir_conjunto(Umbral, Set_B, Reacomodas_B, Set_New)
+	).
+
+eligir_reacomoda(Set, [], High_New, High_New, Choice_New, Choice_New).
+eligir_reacomoda(Set, [Item => Shelf|T], High, High_New, Choice, Choice_New) :-
+	append(Set, [reacomodar(Item)], Set_A),
+	verifica_puntuacion(Set_A, Puntos),
+	(Puntos @> High),
+	eligir_reacomoda(Set, T, Puntos, High_New, [Item => Shelf], Choice_New)
+	; eligir_reacomoda(Set, T, High, High_New, Choice, Choice_New).
+
+%%%%%%
+% End New
+%%%%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elimina_elemento_r([], Lista, Lista).
@@ -298,6 +337,7 @@ verifica_puntuacion([entregar(galletas)],15).
 verifica_puntuacion([entregar(refresco),reacomodar(sopa)],32).
 verifica_puntuacion([entregar(refresco),reacomodar(cerveza)],45).
 verifica_puntuacion([entregar(refresco),reacomodar(galletas)],36).
+verifica_puntuacion([entregar(refresco),reacomodar(cerveza),reacomodar(sopa)],80).
 
 obtiene_puntuacion_nivel(Entrega,Puntuacion):- verifica_puntuacion(Entrega,Puntuacion).
 
@@ -387,20 +427,20 @@ genera_actividad(Producto => _,Actividad):-append([reacomodar(Producto)],[],Acti
 
 
 %Genera una lista de productos que se deben reacomodar con base en el Diagnostico.
-productos_a_reacomodar([],[]).
-productos_a_reacomodar(Diagnostico,Reacomodar):- obtiene_productos(Productos),obtiene_ubicacion_producto(Productos,Mundo_real),
+productos_a_reacomodar(_, [],[]).
+productos_a_reacomodar(KB,Diagnostico,Reacomodar):- obtiene_productos(KB,Productos),obtiene_ubicacion_producto(KB, Productos,Mundo_real),
 												 verif_lista_shelfs(Mundo_real,Diagnostico,Reacomodar). 
 
 %Obtiene del Mundo Real la lista de relaciones(A nivel clase) para verificar en que shelf se encuentra cada producto. Y cambia el valor del producto por la clase.
-obtiene_ubicacion_producto([],[]).	
-obtiene_ubicacion_producto([H|T],Lista_ubicacion):- obtiene_ubicacion_producto(H,[Clase => Shelf]),obtiene_ubicacion_producto(T,Ubi),
+obtiene_ubicacion_producto(KB, [],[]).	
+obtiene_ubicacion_producto(KB, [H|T],Lista_ubicacion):- obtiene_ubicacion_producto(KB, H,[Clase => Shelf]),obtiene_ubicacion_producto(KB,T,Ubi),
 													append([Clase => Shelf],Ubi,Lista_ubicacion),!.
-obtiene_ubicacion_producto(Producto,Ubicacion):- open_kb('C:/IA/KB_Store.txt',KB), rels_inst(Producto,[Clase=>Shelf],KB),
+obtiene_ubicacion_producto(KB, Producto,Ubicacion):- rels_inst(Producto,[Clase=>Shelf],KB),
 												 cambia_valor(Producto,Clase,[Clase=>Shelf],Ubicacion),!.
 									  
 
 %Obtiene lista de productos que deben existir en la base de conocimiento.
-obtiene_productos(Productos):-open_kb('C:/IA/KB_Store.txt',KB),extension_class(comestible,Productos,KB),!.
+obtiene_productos(KB, Productos):-extension_class(comestible,Productos,KB),!.
 
 %Cambia el nombre de la clase por el producto para verificar en que shelf se encuentra.
 cambia_valor(Producto, Clase, [Clase => Shelf|T], [Producto => Shelf|T]).
