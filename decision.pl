@@ -32,7 +32,7 @@
 %Actividades: Actvidades que decide el robot por ejecutar.
 decision(KB,PosRobot,Diagnostico,Actividades):-extension_class(pending_activities,Entregas_pendientes,KB),
 									  productos_a_reacomodar(KB, Diagnostico,Reacomodar),
-									  eligir_conjunto(KB, Diagnostico, PosRobot, 5000, Entregas_pendientes, Reacomodar, Actividades).
+									  eligir_conjunto(KB, Diagnostico, PosRobot, 15, Entregas_pendientes, Reacomodar, Actividades).
 									  % lista_de_actividades(Reacomodar,Act),
 									  % verifica_actividades(Act,Entregas_pendientes,Lista_act),
 									  % concat_actividades(Entregas_pendientes,Lista_act,Actividades),!.
@@ -61,14 +61,15 @@ eligir_reacomoda(KB, Diagnostico, PosRobot, Set, [Item => Shelf|T], High, High_N
 	planeacion2(KB, Set_A, Diagnostico, PosRobot, Acciones),
 	evaluar(KB, PosRobot, Acciones, Puntos),
 
-	(Puntos @> High),
-	eligir_reacomoda(KB, Diagnostico, PosRobot, Set, T, Puntos, High_New, [Item => Shelf], Choice_New)
-	; eligir_reacomoda(KB, Diagnostico, PosRobot, Set, T, High, High_New, Choice, Choice_New).
+	(
+		(Puntos @> High),
+		eligir_reacomoda(KB, Diagnostico, PosRobot, Set, T, Puntos, High_New, [Item => Shelf], Choice_New)
+		; eligir_reacomoda(KB, Diagnostico, PosRobot, Set, T, High, High_New, Choice, Choice_New)
+	).
 
 %%%%%%
 % End New
 %%%%%%
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elimina_elemento_r([], Lista, Lista).

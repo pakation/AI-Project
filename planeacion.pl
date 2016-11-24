@@ -40,9 +40,9 @@ append_entregas([Item|T], Diagnostico, PosRobot, Set, Set_New) :-
 	is_on_shelf(Item, Shelf, Diagnostico),
 	(
 		(PosRobot == Shelf),
-		append(Set, [buscar(Item),agarrar(Item),mover(Shelf,cliente),colocar(Item)], Set_A)
+		append(Set, [buscar(Item),agarrar(Item),mover(Shelf,origen),colocar(Item)], Set_A)
 		;
-		append(Set, [mover(PosRobot,Shelf),buscar(Item),agarrar(Item),mover(Shelf,cliente),colocar(Item)], Set_A)
+		append(Set, [mover(PosRobot,Shelf),buscar(Item),agarrar(Item),mover(Shelf,origen),colocar(Item)], Set_A)
 	),
 	append_entregas(T, Diagnostico, cliente, Set_A, Set_New).
 
