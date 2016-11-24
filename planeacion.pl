@@ -46,7 +46,7 @@ append_entregas([Item|T], Diagnostico, PosRobot, Set, Set_New) :-
 	),
 	append_entregas(T, Diagnostico, cliente, Set_A, Set_New).
 
-planeacion2(KB, Decisiones, Diagnostico, PosRobot, Set_New) :-
+planeacion(KB, Decisiones, Diagnostico, PosRobot, Set_New) :-
 	remove_entregas(Decisiones, [], Decisiones_Clean, [], Entregas),
 	top_down(KB, Decisiones_Clean, Diagnostico, PosRobot, PosRobot_New, [], Set_A),
 	append_entregas(Entregas, Diagnostico, PosRobot_New, Set_A, Set_New).

@@ -33,4 +33,4 @@ is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 robot(KB, Diagnostico, AsistenteAcciones, Decision, Plan) :-
 	diagnosis(KB, Diagnostico, AsistenteAcciones),
 	decision(KB, shelf1, Diagnostico, Decision),
-	planeacion2(KB, Decision, Diagnostico, shelf1, Plan).
+	planeacion(KB, Decision, Diagnostico, shelf1, Plan).
