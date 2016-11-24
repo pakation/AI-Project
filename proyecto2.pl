@@ -11,6 +11,8 @@
 %*Knowledge-Base for Service Robots"                            *
 %****************************************************************
 
+:- op(800,xfx,'=>').
+
 :- ensure_loaded(puntuacion).
 
 %****************************************************************
@@ -49,8 +51,6 @@ atom_to_term(ATOM, TERM) :-
 	atom_to_chars('.',PTO),
 	append(STR,PTO,STR_PTO),
 	read_from_chars(STR_PTO,TERM).
-
-:- op(800,xfx,'=>').
 
 %****************************************************************
 % 1a. Extensiones de una class
