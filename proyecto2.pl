@@ -25,6 +25,7 @@ is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
 :- ensure_loaded(proyecto1).
 
+:- ensure_loaded(puntuacion).
 :- ensure_loaded(diagnosis).
 :- ensure_loaded(decision).
 :- ensure_loaded(planeacion).
