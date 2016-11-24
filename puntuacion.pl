@@ -124,5 +124,7 @@ do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, [reacomoda
  	do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, T, [Score,Item=>Shelf], Set_New)
  	;
  	do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, T, [Score_A,Item_A=>Shelf_A], Set_New).
+do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, [_|T], [Score_A,Item_A=>Shelf_A], Set_New) :-
+	do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, T, [Score_A,Item_A=>Shelf_A], Set_New).
 % do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, [_|T], [Score_A,Item_A=>Shelf_A], Set_New) :-
 %  	do_eligir_proximo_objecto(Creencias, Location, Costs, Recomps, Probs, T, [Score_A,Item_A=>Shelf_A], Set_New).

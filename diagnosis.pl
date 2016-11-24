@@ -1,5 +1,7 @@
-:- ensure_loaded(proyecto1).
-:- op(800,xfx,'=>').
+% verdad si el objecto está en un estante específico
+%is_on_shelf(Item, Shelf, [Item => Shelf|_]).
+%is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
+
 %
 % Punto de entrada
 %
@@ -32,7 +34,7 @@ do_diagnosis(Creencias, Observaciones, Estantes, Creencias_New, Acciones) :-
 	% borrar el objecto especial 'empty'
 	remove_special_item_empty(Creencias_C, [], Creencias_New),
 	% generar los acciones que el asistente hizo para hacerlo real la nueva creencia
-	generate_shopkeeper_actions(Creencias_New, Estantes, l0, [], Acciones).
+	generate_shopkeeper_actions(Creencias_New, Estantes, almacen, [], Acciones).
 
 % true if we have a match with empty
 is_special_item_empty(empty).
@@ -88,10 +90,6 @@ remove_inconsistencies([Item => Shelf|T], Obvs, Creencias_Malos_A, Creencias_Mal
 % true if the robot has seen the given shelf, false otherwise
 has_seen_shelf(Shelf, [_ => Shelf|_]).
 has_seen_shelf(Shelf, [_|T]) :- has_seen_shelf(Shelf, T).
-
-% verdad si el objecto está en un estante específico
-is_on_shelf(Item, Shelf, [Item => Shelf|_]).
-is_on_shelf(Item, Shelf, [_|T]) :- is_on_shelf(Item, Shelf, T).
 
 not_empty([_]).
 not_empty([_|_]).
